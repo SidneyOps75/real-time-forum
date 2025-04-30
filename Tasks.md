@@ -6,7 +6,7 @@ A checklist to help you track your progress through the development of your real
 
 ## 📁 Project Setup
 
-- [ ] Initialize Go project
+- ✅ Initialize Go project
 - [ ] Create SQLite database and schema
 - [ ] Set up file structure (`/static`, `/templates`, `/handlers`, `/db`, etc.)
 - [ ] Create main Go server with basic routing
