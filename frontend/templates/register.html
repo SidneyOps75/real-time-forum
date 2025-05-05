@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account - NexusForum</title>
+  <link rel="stylesheet" href="register.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="icon">💬</div>
+      <h1>Create an Account</h1>
+      <p class="subtitle">Join NexusForum today</p>
+
+      <form>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" placeholder="John">
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" placeholder="Doe">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="nickname">Nickname</label>
+          <input type="text" id="nickname" placeholder="Choose a unique nickname">
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" placeholder="Age">
+          </div>
+          <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+              <option>Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Create a password">
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm your password">
+        </div>
+
+        <button type="submit" class="submit-btn">Create Account</button>
+      </form>
+
+      <p class="footer-text">Already have an account? <a href="login.html">Sign in</a></p>
+      <p class="footer-text"><a href="index.html">Back to home</a></p>
+    </div>
+  </div>
+</body>
+</html>
