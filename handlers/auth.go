@@ -123,3 +123,26 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
+
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/logout" {
+		//utils.DisplayError(w, http.StatusNotFound, " page not found")
+		return
+	}
+	if r.Method != http.MethodPost {
+		//utils.DisplayError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	cookie, err := r.Cookie("session_id")
+	if err == nil && cookie.Value != "" {
+		_, err = db.DB.Exec(`DELETE FROM sessions WHERE session_id = ?`, cookie.Value)
+		if err != nil {
+			log.Printf("Error deleting session: %v", err)
+		}
+	}
+
+	http.SetCookie(w, &http.Cookie{Name: "session_id", Value: "", Expires: time.Now().Add(-time.Hour), Path: "/", HttpOnly: true})
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
