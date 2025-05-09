@@ -150,50 +150,133 @@ function updateAuthUI() {
 
 // Form handlers (these would be connected to your backend)
 function handleLogin() {
-  const identifier = document.getElementById('identifier').value;
-  const password = document.getElementById('password').value;
-  
-  if (!identifier || !password) {
-      alert('Please fill in all fields');
-      return;
+    const identifier = document.getElementById('identifier').value;
+    const password = document.getElementById('password').value;
+    
+    // Clear previous errors
+    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    
+    let hasErrors = false;
+    if (!identifier) {
+      const errorElement = document.getElementById('identifier-error');
+      if (errorElement) {
+        errorElement.textContent = 'Please enter your username or email';
+        hasErrors = true;
+      }
+    }
+    
+    if (!password) {
+      const errorElement = document.getElementById('password-error');
+      if (errorElement) {
+        errorElement.textContent = 'Please enter your password';
+        hasErrors = true;
+      }
+    }
+    
+    if (hasErrors) return;
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('identifier', identifier);
+    formData.append('password', password);
+    
+    // Send login request to the backend
+    fetch('/login', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errors => {
+          // Display validation errors from the server
+          for (const [field, message] of Object.entries(errors)) {
+            const errorElement = document.getElementById(`${field}-error`);
+            if (errorElement) {
+              errorElement.textContent = message;
+            }
+          }
+          throw new Error('Login failed');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.status === 'success') {
+        localStorage.setItem('isAuthenticated', 'true');
+        updateAuthUI();
+        showPage('home');
+      }
+    })
+    .catch(error => {
+      console.error('Login error:', error);
+    });
   }
-  
-  // Here you would make an AJAX call to your backend
-  console.log('Login attempt with:', identifier, password);
-  
-  // Simulate successful login
-  // In a real app, this would be in the success callback of your AJAX request
-  localStorage.setItem('isAuthenticated', 'true');
-  updateAuthUI();
-  showPage('home');
-}
 
 function handleRegister() {
-  const formData = new FormData(document.getElementById('register-form'));
-  const requiredFields = ['username', 'email', 'password', 'confirmpassword', 'firstname', 'lastname', 'age', 'gender'];
-  
-  // Simple validation
-  for (const field of requiredFields) {
+    const form = document.getElementById('register-form');
+    const formData = new FormData(form);
+    const requiredFields = ['nickname', 'age', 'gender', 'firstName', 'lastName', 'email', 'password', 'confirmPassword'];
+    
+    // Clear previous errors
+    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    
+    // Simple validation
+    let hasErrors = false;
+    for (const field of requiredFields) {
       if (!formData.get(field)) {
-          alert(`Please fill in the ${field} field`);
-          return;
+        const errorElement = document.getElementById(`${field}-error`);
+        if (errorElement) {
+          errorElement.textContent = `This field is required`;
+          hasErrors = true;
+        }
       }
+    }
+    
+    // Password match validation
+    if (formData.get('password') !== formData.get('confirmPassword')) {
+      const errorElement = document.getElementById('confirmPassword-error');
+      if (errorElement) {
+        errorElement.textContent = 'Passwords do not match';
+      }
+      hasErrors = true;
+    }
+    
+    if (hasErrors) return;
+    
+    // Send the registration data to the backend
+    fetch('/register', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errors => {
+          // Display validation errors from the server
+          for (const [field, message] of Object.entries(errors)) {
+            const errorElement = document.getElementById(`${field}-error`);
+            if (errorElement) {
+              errorElement.textContent = message;
+            }
+          }
+          throw new Error('Registration failed');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.status === 'success') {
+        localStorage.setItem('isAuthenticated', 'true');
+        updateAuthUI();
+        showPage('home');
+        
+        // Optionally show a success message
+        alert('Registration successful!');
+      }
+    })
+    .catch(error => {
+      console.error('Registration error:', error);
+    });
   }
-  
-  // Password match validation
-  if (formData.get('password') !== formData.get('confirmpassword')) {
-      alert('Passwords do not match');
-      return;
-  }
-  
-  // Here you would make an AJAX call to your backend
-  console.log('Registration data:', Object.fromEntries(formData));
-  
-  // Simulate successful registration
-  localStorage.setItem('isAuthenticated', 'true');
-  updateAuthUI();
-  showPage('home');
-}
 
 function handleCreatePost() {
   const formData = new FormData(document.getElementById('create-post-form'));
