@@ -129,54 +129,58 @@
                 </form>
             </section>
 
-            <!-- Register Page -->
-            <section id="register-page" class="page-section">
-                <h2>Register</h2>
-                <form id="register-form" enctype="multipart/form-data">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
-                    <span id="username-error" class="error-message"></span>
-                    <br>
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
-                    <span id="email-error" class="error-message"></span>
-                    <br>
-                    <label for="reg-password">Password</label>
-                    <input type="password" id="reg-password" name="password" required>
-                    <span id="reg-password-error" class="error-message"></span>
-                    <br>
-                    <label for="confirmpassword">Confirm Password</label>
-                    <input type="password" id="confirmpassword" name="confirmpassword" required>
-                    <span id="confirmpassword-error" class="error-message"></span>
-                    <br>
-                    <label for="firstname">First Name</label>
-                    <input type="text" id="firstname" name="firstname" required>
-                    <br>
-                    <label for="lastname">Last Name</label>
-                    <input type="text" id="lastname" name="lastname" required>
-                    <br>
-                    <label for="age">Age</label>
-                    <input type="number" id="age" name="age" required>
-                    <br>
-                    <label for="gender">Gender</label>
-                    <select id="gender" name="gender" required>
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </select>
-                    <br>
-                    <label for="pic">Profile picture</label>
-                    <input type="file" id="pic" name="img" accept="image/*">
-                    <br>
-                    <label for="bio">About</label>
-                    <input type="text" id="bio" name="bio">
-                    <br>
-                    <button type="submit">Register</button>
-                    <p>Already have an account? <a href="#" class="nav-link" data-page="login">login here</a></p>
-                </form>
-            </section>
-
+           <!-- Register Page -->
+<section id="register-page" class="page-section">
+    <form id="register-form" method="POST" action="/register" enctype="multipart/form-data">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required>
+      <span id="username-error" class="error-message"></span>
+      <br>
+  
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+      <span id="email-error" class="error-message"></span>
+      <br>
+  
+      <label for="reg-password">Password</label>
+      <input type="password" id="reg-password" name="password" required>
+      <span id="reg-password-error" class="error-message"></span>
+      <br>
+  
+      <label for="confirmpassword">Confirm Password</label>
+      <input type="password" id="confirmpassword" name="confirmpassword" required>
+      <span id="confirmpassword-error" class="error-message"></span>
+      <br>
+  
+      <label for="firstname">First Name</label>
+      <input type="text" id="firstname" name="firstname" required>
+      <span id="firstname-error" class="error-message"></span>
+      <br>
+  
+      <label for="lastname">Last Name</label>
+      <input type="text" id="lastname" name="lastname" required>
+      <span id="lastname-error" class="error-message"></span>
+      <br>
+  
+      <label for="age">Age</label>
+      <input type="number" id="age" name="age" required>
+      <span id="age-error" class="error-message"></span>
+      <br>
+  
+      <label for="gender">Gender</label>
+      <select id="gender" name="gender" required>
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="other">Other</option>
+      </select>
+      <span id="gender-error" class="error-message"></span>
+      <br>
+  
+      <!-- Other fields... -->
+      <button type="submit">Register</button>
+    </form>
+  </section>
             <!-- Create Post Page -->
             <section id="create-post-page" class="page-section">
                 <h2>Create a New Post</h2>
@@ -213,6 +217,6 @@
     </aside>
 
     <script src="/static/main.js"></script>
-    <script src="/static/js/websocket.js"></script>
+    <!-- <script src="/static/js/websocket.js"></script> -->
 </body>
 </html>

@@ -1,46 +1,41 @@
 // main.js
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize the app with the home page
-  showPage('home');
-  
-  // Set up navigation event listeners
-  setupNavigation();
-  
-  // Set up form submissions
-  setupForms();
 
-  // Check authentication status
+document.addEventListener('DOMContentLoaded', function () {
+  showPage('home');
+  setupNavigation();
+  setupForms(); // Call once initially
   updateAuthUI();
 });
 
-// Show the specified page and hide others
+// Show specified page and hide others
 function showPage(pageId) {
-  // Hide all page sections
   document.querySelectorAll('.page-section').forEach(section => {
       section.classList.remove('active-section');
   });
-  
-  // Show the requested page
+
   const page = document.getElementById(`${pageId}-page`);
   if (page) {
       page.classList.add('active-section');
+
+      // Setup forms only if not initialized
+      if (!page.dataset.initialized && ['register', 'login', 'create-post'].includes(pageId)) {
+          setupForms();
+          page.dataset.initialized = 'true';
+      }
   } else {
       console.error(`Page with ID "${pageId}-page" not found!`);
   }
-  
-  // Special handling for home page to ensure filters are visible
-  if (pageId === 'home') {
-      document.getElementById('filters-sidebar').style.display = 'block';
-  } else {
-      document.getElementById('filters-sidebar').style.display = 'none';
+
+  const filtersSidebar = document.getElementById('filters-sidebar');
+  if (filtersSidebar) {
+      filtersSidebar.style.display = pageId === 'home' ? 'block' : 'none';
   }
-  
+
   updateAuthUI();
 }
 
 // Set up navigation links
 function setupNavigation() {
-  // Handle navigation link clicks
   document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', function(e) {
           e.preventDefault();
@@ -48,16 +43,14 @@ function setupNavigation() {
           showPage(page);
       });
   });
-  
-  // Create Post button
+
   const createPostBtn = document.getElementById('create-post-btn');
   if (createPostBtn) {
       createPostBtn.addEventListener('click', function() {
           showPage('create-post');
       });
   }
-  
-  // Logout form
+
   const logoutForm = document.getElementById('logout-form');
   if (logoutForm) {
       logoutForm.addEventListener('submit', function(e) {
@@ -66,14 +59,13 @@ function setupNavigation() {
       });
   }
 
-  // Home page auth buttons
   const homeLoginBtn = document.getElementById('home-login-btn');
   if (homeLoginBtn) {
       homeLoginBtn.addEventListener('click', function() {
           showPage('login');
       });
   }
-  
+
   const homeRegisterBtn = document.getElementById('home-register-btn');
   if (homeRegisterBtn) {
       homeRegisterBtn.addEventListener('click', function() {
@@ -84,220 +76,217 @@ function setupNavigation() {
 
 // Set up form submissions
 function setupForms() {
-  // Login form
   const loginForm = document.getElementById('login-form');
-  if (loginForm) {
+  if (loginForm && !loginForm.dataset.listenerAdded) {
       loginForm.addEventListener('submit', function(e) {
           e.preventDefault();
           handleLogin();
       });
-  } else {
-      console.error("Login form not found!");
+      loginForm.dataset.listenerAdded = 'true';
   }
-  
-  // Register form
+
   const registerForm = document.getElementById('register-form');
-  if (registerForm) {
+  if (registerForm && !registerForm.dataset.listenerAdded) {
       registerForm.addEventListener('submit', function(e) {
           e.preventDefault();
           handleRegister();
       });
-  } else {
-      console.error("Register form not found!");
+      registerForm.dataset.listenerAdded = 'true';
   }
-  
-  // Create Post form
+
   const createPostForm = document.getElementById('create-post-form');
-  if (createPostForm) {
+  if (createPostForm && !createPostForm.dataset.listenerAdded) {
       createPostForm.addEventListener('submit', function(e) {
           e.preventDefault();
           handleCreatePost();
       });
-  } else {
-      console.error("Create post form not found!");
+      createPostForm.dataset.listenerAdded = 'true';
   }
 }
 
 // Update UI based on authentication status
 function updateAuthUI() {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  
-  // Update header display
-  if (isAuthenticated) {
-      document.querySelector('#auth-buttons #login-btn').style.display = 'none';
-      document.querySelector('#auth-buttons #register-btn').style.display = 'none';
-      document.querySelector('#logout-form').style.display = 'inline-block';
-  } else {
-      document.querySelector('#auth-buttons #login-btn').style.display = 'inline-block';
-      document.querySelector('#auth-buttons #register-btn').style.display = 'inline-block';
-      document.querySelector('#logout-form').style.display = 'none';
+
+  const loginBtn = document.querySelector('#auth-buttons #login-btn');
+  const registerBtn = document.querySelector('#auth-buttons #register-btn');
+  const logoutForm = document.querySelector('#logout-form');
+
+  if (loginBtn && registerBtn && logoutForm) {
+      loginBtn.style.display = isAuthenticated ? 'none' : 'inline-block';
+      registerBtn.style.display = isAuthenticated ? 'none' : 'inline-block';
+      logoutForm.style.display = isAuthenticated ? 'inline-block' : 'none';
   }
-  
-  // Update home page display
-  const homePage = document.getElementById('home-page');
-  if (homePage) {
-      if (isAuthenticated) {
-          document.querySelector('.auth-center-container').style.display = 'none';
-          document.getElementById('authenticated-content').style.display = 'block';
-          document.getElementById('chat-sidebar').style.display = 'block';
-      } else {
-          document.querySelector('.auth-center-container').style.display = 'flex';
-          document.getElementById('authenticated-content').style.display = 'none';
-          document.getElementById('chat-sidebar').style.display = 'none';
-      }
+
+  const authContainer = document.querySelector('.auth-center-container');
+  const authenticatedContent = document.getElementById('authenticated-content');
+  const chatSidebar = document.getElementById('chat-sidebar');
+
+  if (authContainer && authenticatedContent && chatSidebar) {
+      authContainer.style.display = isAuthenticated ? 'none' : 'flex';
+      authenticatedContent.style.display = isAuthenticated ? 'block' : 'none';
+      chatSidebar.style.display = isAuthenticated ? 'block' : 'none';
   }
 }
 
-// Form handlers (these would be connected to your backend)
+// Handle login
 function handleLogin() {
-    const identifier = document.getElementById('identifier').value;
-    const password = document.getElementById('password').value;
-    
-    // Clear previous errors
-    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-    
-    let hasErrors = false;
-    if (!identifier) {
+  const identifier = document.getElementById('identifier').value;
+  const password = document.getElementById('password').value;
+
+  document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+  let hasErrors = false;
+
+  if (!identifier) {
       const errorElement = document.getElementById('identifier-error');
       if (errorElement) {
-        errorElement.textContent = 'Please enter your username or email';
-        hasErrors = true;
+          errorElement.textContent = 'Please enter your username or email';
+          hasErrors = true;
       }
-    }
-    
-    if (!password) {
+  }
+
+  if (!password) {
       const errorElement = document.getElementById('password-error');
       if (errorElement) {
-        errorElement.textContent = 'Please enter your password';
-        hasErrors = true;
-      }
-    }
-    
-    if (hasErrors) return;
-    
-    // Create form data
-    const formData = new FormData();
-    formData.append('identifier', identifier);
-    formData.append('password', password);
-    
-    // Send login request to the backend
-    fetch('/login', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(errors => {
-          // Display validation errors from the server
-          for (const [field, message] of Object.entries(errors)) {
-            const errorElement = document.getElementById(`${field}-error`);
-            if (errorElement) {
-              errorElement.textContent = message;
-            }
-          }
-          throw new Error('Login failed');
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.status === 'success') {
-        localStorage.setItem('isAuthenticated', 'true');
-        updateAuthUI();
-        showPage('home');
-      }
-    })
-    .catch(error => {
-      console.error('Login error:', error);
-    });
-  }
-
-function handleRegister() {
-    const form = document.getElementById('register-form');
-    const formData = new FormData(form);
-    const requiredFields = ['nickname', 'age', 'gender', 'firstName', 'lastName', 'email', 'password', 'confirmPassword'];
-    
-    // Clear previous errors
-    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-    
-    // Simple validation
-    let hasErrors = false;
-    for (const field of requiredFields) {
-      if (!formData.get(field)) {
-        const errorElement = document.getElementById(`${field}-error`);
-        if (errorElement) {
-          errorElement.textContent = `This field is required`;
+          errorElement.textContent = 'Please enter your password';
           hasErrors = true;
-        }
       }
-    }
-    
-    // Password match validation
-    if (formData.get('password') !== formData.get('confirmPassword')) {
-      const errorElement = document.getElementById('confirmPassword-error');
-      if (errorElement) {
-        errorElement.textContent = 'Passwords do not match';
-      }
-      hasErrors = true;
-    }
-    
-    if (hasErrors) return;
-    
-    // Send the registration data to the backend
-    fetch('/register', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(errors => {
-          // Display validation errors from the server
-          for (const [field, message] of Object.entries(errors)) {
-            const errorElement = document.getElementById(`${field}-error`);
-            if (errorElement) {
-              errorElement.textContent = message;
-            }
-          }
-          throw new Error('Registration failed');
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.status === 'success') {
-        localStorage.setItem('isAuthenticated', 'true');
-        updateAuthUI();
-        showPage('home');
-        
-        // Optionally show a success message
-        alert('Registration successful!');
-      }
-    })
-    .catch(error => {
-      console.error('Registration error:', error);
-    });
   }
 
+  if (hasErrors) return;
+
+  const formData = new FormData();
+  formData.append('identifier', identifier);
+  formData.append('password', password);
+
+  fetch('/login', {
+      method: 'POST',
+      body: formData
+  })
+  .then(response => {
+      if (!response.ok) {
+          return response.json().then(errors => {
+              for (const [field, message] of Object.entries(errors)) {
+                  const errorElement = document.getElementById(`${field}-error`) ||
+                                       document.getElementById(`${field === 'password' ? 'password' : field}-error`);
+                  if (errorElement) errorElement.textContent = message;
+              }
+              throw new Error('Login failed');
+          });
+      }
+      return response.json();
+  })
+  .then(data => {
+      if (data.status === 'success') {
+          localStorage.setItem('isAuthenticated', 'true');
+          updateAuthUI();
+          showPage('home');
+      }
+  })
+  .catch(error => {
+      console.error('Login error:', error);
+  });
+}
+
+// Handle registration
+function handleRegister() {
+  const form = document.getElementById('register-form');
+  if (!form) {
+      console.error('Register form not found!');
+      return;
+  }
+
+  const formData = new FormData(form);
+
+  document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+  let hasErrors = false;
+
+  const requiredFields = [
+      'username', 'email', 'password', 'confirmpassword',
+      'firstname', 'lastname', 'age', 'gender'
+  ];
+
+  for (const field of requiredFields) {
+      const value = formData.get(field);
+      if (!value) {
+          const errorElement = document.getElementById(`${field}-error`) ||
+                               document.getElementById(`${field === 'password' ? 'reg-password' : field}-error`);
+          if (errorElement) {
+              errorElement.textContent = 'This field is required';
+              hasErrors = true;
+          }
+      }
+  }
+
+  const password = formData.get('password');
+  const confirmPassword = formData.get('confirmpassword');
+  if (password !== confirmPassword) {
+      const errorElement = document.getElementById('confirmpassword-error');
+      if (errorElement) {
+          errorElement.textContent = 'Passwords do not match';
+          hasErrors = true;
+      }
+  }
+
+  if (hasErrors) return;
+
+  fetch('/register', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    if (!response.headers.get('content-type')?.includes('application/json')) {
+      // If not JSON, read as text and log it
+      return response.text().then(text => {
+        console.error('Non-JSON response received:', text);
+        alert('Server returned an unexpected response. Check the console.');
+        throw new Error('Non-JSON response from server');
+      });
+    }
+  
+    if (!response.ok) {
+      return response.json().then(errors => {
+        for (const [field, message] of Object.entries(errors)) {
+          const errorElement = document.getElementById(`${field}-error`) ||
+                               document.getElementById(`${field === 'password' ? 'reg-password' : field}-error`);
+          if (errorElement) errorElement.textContent = message;
+        }
+        throw new Error('Registration failed');
+      });
+    }
+  
+    return response.json();
+  })
+  .then(data => {
+    if (data.status === 'success') {
+      localStorage.setItem('isAuthenticated', 'true');
+      updateAuthUI();
+      showPage('home');
+      alert('Registration successful!');
+    }
+  })
+  .catch(error => {
+    console.error('Registration error:', error);
+  });
+}
+
+// Handle creating a post
 function handleCreatePost() {
   const formData = new FormData(document.getElementById('create-post-form'));
-  
-  // Simple validation
+
   if (!formData.get('title') || !formData.get('content')) {
       alert('Please fill in all required fields');
       return;
   }
-  
-  // Here you would make an AJAX call to your backend
+
   console.log('New post data:', Object.fromEntries(formData));
-  
-  // Return to home page after creation
   showPage('home');
 }
 
+// Handle logout
 function handleLogout() {
-  // Here you would make an AJAX call to your backend
   console.log('User logged out');
-  
   localStorage.removeItem('isAuthenticated');
   updateAuthUI();
   showPage('home');
