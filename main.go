@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"real/db"
@@ -16,8 +17,7 @@ func main() {
 
 	// Set up API routes
 	http.HandleFunc("/login", handlers.LoginHandler)
-	http.HandleFunc("/register", handlers.RegisterHandler)
-	
+	http.HandleFunc("/register", recoverMiddleware(handlers.RegisterHandler))
 	// Serve static files
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -40,4 +40,26 @@ func main() {
 	// Start server
 	log.Println("Server started at http://localhost:8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))
+}
+func recoverMiddleware(next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if err := recover(); err != nil {
+                log.Printf("Panic recovered: %v", err)
+                writeJSON(w, http.StatusInternalServerError, map[string]string{
+                    "status":  "error",
+                    "message": "Internal server error",
+                })
+            }
+        }()
+        next(w, r)
+    }
+}
+func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    if err := json.NewEncoder(w).Encode(data); err != nil {
+        log.Printf("JSON encode error: %v", err)
+        http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+    }
 }
