@@ -129,148 +129,148 @@ function updateAuthUI() {
   }
 }
 
+
 // Handle login
 function handleLogin() {
-  const identifier = document.getElementById('identifier').value;
-  const password = document.getElementById('password').value;
+    const identifier = document.getElementById('identifier').value;
+    const password = document.getElementById('password').value;
 
-  document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-  let hasErrors = false;
-
-  if (!identifier) {
-      const errorElement = document.getElementById('identifier-error');
-      if (errorElement) {
-          errorElement.textContent = 'Please enter your username or email';
-          hasErrors = true;
-      }
-  }
-
-  if (!password) {
-      const errorElement = document.getElementById('password-error');
-      if (errorElement) {
-          errorElement.textContent = 'Please enter your password';
-          hasErrors = true;
-      }
-  }
-
-  if (hasErrors) return;
-
-  const formData = new FormData();
-  formData.append('identifier', identifier);
-  formData.append('password', password);
-
-  fetch('/login', {
-      method: 'POST',
-      body: formData
-  })
-  .then(response => {
-      if (!response.ok) {
-          return response.json().then(errors => {
-              for (const [field, message] of Object.entries(errors)) {
-                  const errorElement = document.getElementById(`${field}-error`) ||
-                                       document.getElementById(`${field === 'password' ? 'password' : field}-error`);
-                  if (errorElement) errorElement.textContent = message;
-              }
-              throw new Error('Login failed');
-          });
-      }
-      return response.json();
-  })
-  .then(data => {
-      if (data.status === 'success') {
-          localStorage.setItem('isAuthenticated', 'true');
-          updateAuthUI();
-          showPage('home');
-      }
-  })
-  .catch(error => {
-      console.error('Login error:', error);
-  });
-}
-
-// Handle registration
-function handleRegister() {
-  const form = document.getElementById('register-form');
-  if (!form) {
-      console.error('Register form not found!');
-      return;
-  }
-
-  const formData = new FormData(form);
-
-  document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-  let hasErrors = false;
-
-  const requiredFields = [
-      'username', 'email', 'password', 'confirmpassword',
-      'firstname', 'lastname', 'age', 'gender'
-  ];
-
-  for (const field of requiredFields) {
-      const value = formData.get(field);
-      if (!value) {
-          const errorElement = document.getElementById(`${field}-error`) ||
-                               document.getElementById(`${field === 'password' ? 'reg-password' : field}-error`);
-          if (errorElement) {
-              errorElement.textContent = 'This field is required';
-              hasErrors = true;
-          }
-      }
-  }
-
-  const password = formData.get('password');
-  const confirmPassword = formData.get('confirmpassword');
-  if (password !== confirmPassword) {
-      const errorElement = document.getElementById('confirmpassword-error');
-      if (errorElement) {
-          errorElement.textContent = 'Passwords do not match';
-          hasErrors = true;
-      }
-  }
-
-  if (hasErrors) return;
-
-  fetch('/register', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => {
-    console.log('Response status:', response.status);
-    if (!response.headers.get('content-type')?.includes('application/json')) {
-      // If not JSON, read as text and log it
-      return response.text().then(text => {
-        console.error('Non-JSON response received:', text);
-        alert('Server returned an unexpected response. Check the console.');
-        throw new Error('Non-JSON response from server');
-      });
+    // Clear previous errors
+    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    
+    // Client-side validation
+    if (!identifier) {
+        document.getElementById('identifier-error').textContent = 'Please enter your username or email';
+        return;
     }
-  
-    if (!response.ok) {
-      return response.json().then(errors => {
-        for (const [field, message] of Object.entries(errors)) {
-          const errorElement = document.getElementById(`${field}-error`) ||
-                               document.getElementById(`${field === 'password' ? 'reg-password' : field}-error`);
-          if (errorElement) errorElement.textContent = message;
+    if (!password) {
+        document.getElementById('password-error').textContent = 'Please enter your password';
+        return;
+    }
+
+    // Show loading state
+    const submitBtn = document.querySelector('#login-form button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.textContent = 'Logging in...';
+    submitBtn.disabled = true;
+
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            identifier: identifier,
+            password: password
+        })
+    })
+    .then(async response => {
+        // Reset button state
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Handle validation errors
+            if (data.errors) {
+                for (const [field, message] of Object.entries(data.errors)) {
+                    const errorElement = document.getElementById(`${field}-error`);
+                    if (errorElement) errorElement.textContent = message;
+                }
+            }
+            throw new Error(data.message || 'Login failed');
         }
-        throw new Error('Registration failed');
-      });
-    }
-  
-    return response.json();
-  })
-  .then(data => {
-    if (data.status === 'success') {
-      localStorage.setItem('isAuthenticated', 'true');
-      updateAuthUI();
-      showPage('home');
-      alert('Registration successful!');
-    }
-  })
-  .catch(error => {
-    console.error('Registration error:', error);
-  });
-}
 
+        return data;
+    })
+    .then(data => {
+        if (data.success && data.authenticated) {
+            localStorage.setItem('isAuthenticated', 'true');
+            if (data.user) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+            }
+            updateAuthUI();
+            showPage('home');
+        } else {
+            throw new Error('Authentication failed');
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        document.getElementById('password-error').textContent = error.message || 'Login failed. Please try again.';
+    });
+}
+// Handle registration
+ async function handleRegister() {
+    const form = document.getElementById('register-form');
+    if (!form) {
+        console.error('Register form not found!');
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    let hasErrors = false;
+
+    const requiredFields = [
+        'username', 'email', 'password', 'confirmpassword',
+        'firstname', 'lastname', 'age', 'gender'
+    ];
+
+    for (const field of requiredFields) {
+        const value = formData.get(field);
+        if (!value) {
+            const errorElement = document.getElementById(`${field}-error`) ||
+                document.getElementById(`${field === 'password' ? 'reg-password' : field}-error`);
+            if (errorElement) {
+                errorElement.textContent = 'This field is required';
+                hasErrors = true;
+            }
+        }
+    }
+
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmpassword');
+    if (password !== confirmPassword) {
+        const errorElement = document.getElementById('confirmpassword-error');
+        if (errorElement) {
+            errorElement.textContent = 'Passwords do not match';
+            hasErrors = true;
+        }
+    }
+
+    if (hasErrors) return;
+
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            body: formData // Your existing FormData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (data.errors) {
+                // Display field-specific errors
+                for (const [field, message] of Object.entries(data.errors)) {
+                    const errorElement = document.getElementById(`${field}-error`);
+                    if (errorElement) errorElement.textContent = message;
+                }
+            }
+            throw new Error(data.error || 'Registration failed');
+        }
+
+        if (data.success) {
+            alert(data.message || 'Registration successful!');
+            showPage('login');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        // Show error to user
+    }
+}
 // Handle creating a post
 function handleCreatePost() {
   const formData = new FormData(document.getElementById('create-post-form'));
