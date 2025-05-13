@@ -143,6 +143,7 @@ function handleLogin() {
         document.getElementById('identifier-error').textContent = 'Please enter your username or email';
         return;
     }
+
     if (!password) {
         document.getElementById('password-error').textContent = 'Please enter your password';
         return;
@@ -271,19 +272,146 @@ function handleLogin() {
         // Show error to user
     }
 }
+
 // Handle creating a post
-function handleCreatePost() {
-  const formData = new FormData(document.getElementById('create-post-form'));
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories', {
+            credentials: 'include' // Include cookies
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error("Response is not JSON");
+        }
+        
+        const categories = await response.json();
+        console.log('Loaded categories:', categories); // Debug log
+        
+        const container = document.getElementById('categories-container');
+        if (container) {
+            container.innerHTML = categories.map(cat => `
+                <div class="category-option">
+                    <input type="checkbox" 
+                           id="category-${cat.category_id}" 
+                           name="category" 
+                           value="${cat.category_id}">
+                    <label for="category-${cat.category_id}">
+                        ${cat.name}${cat.description ? ` - ${cat.description}` : ''}
+                    </label>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        const container = document.getElementById('categories-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="error">
+                    Failed to load categories. 
+                    <button onclick="loadCategories()">Retry</button>
+                </div>
+            `;
+        }
+    }
+}
+// Enhanced handleCreatePost function
+async function handleCreatePost() {
+    // Check authentication more thoroughly
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const user = JSON.parse(localStorage.getItem('user') )
+    
+    if (!isAuthenticated || !user.id) {
+        alert('Please login to create posts');
+        showPage('login');
+        return;
+    }
 
-  if (!formData.get('title') || !formData.get('content')) {
-      alert('Please fill in all required fields');
-      return;
-  }
+    const form = document.getElementById('create-post-form');
+    if (!form) return;
 
-  console.log('New post data:', Object.fromEntries(formData));
-  showPage('home');
+    const formData = new FormData(form);
+    const title = formData.get('title');
+    const content = formData.get('content');
+    const categories = formData.getAll('category');
+
+    // Validate inputs
+    if (!title || !content) {
+        alert('Title and content are required');
+        return;
+    }
+
+    if (categories.length === 0) {
+        alert('Please select at least one category');
+        return;
+    }
+
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting...';
+
+    try {
+        // Get session cookie
+        const cookies = document.cookie;
+        const sessionCookie = cookies.split('; ')
+            .find(row => row.startsWith('session_id='));
+        
+        const response = await fetch('/post/create', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include', // This sends cookies with the request
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`, // If using JWT
+                'Cookie': sessionCookie // Send session cookie explicitly
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to create post');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            form.reset();
+            alert('Post created successfully!');
+            showPage('home');
+        } else {
+            throw new Error(data.message || 'Post creation failed');
+        }
+    } catch (error) {
+        console.error('Post creation error:', error);
+        alert(error.message || 'Failed to create post. Please try again.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
 }
 
+// Update your DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    showPage('home');
+    setupNavigation();
+    setupForms();
+    updateAuthUI();
+    loadCategories(); // Load categories when page loads
+    
+    // Add this to your existing setupForms function
+    const createPostForm = document.getElementById('create-post-form');
+    if (createPostForm && !createPostForm.dataset.listenerAdded) {
+        createPostForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleCreatePost();
+        });
+        createPostForm.dataset.listenerAdded = 'true';
+    }
+});
 // Handle logout
 function handleLogout() {
   console.log('User logged out');
