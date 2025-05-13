@@ -14,128 +14,170 @@ import (
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST method allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    // Set content type first
+    w.Header().Set("Content-Type", "application/json")
 
-	err := r.ParseMultipartForm(10 << 20) // Supports FormData
-	if err != nil {
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
-		log.Println("Form parse error:", err)
-		return
-	}
+    if r.Method != http.MethodPost {
+        writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "Only POST method allowed"})
+        return
+    }
 
-	username := r.FormValue("username")
-    email := r.FormValue("email")
-    password := r.FormValue("password")
-    confirmpassword := r.FormValue("confirmpassword") // renamed from confirmPassword
-    firstname := r.FormValue("firstname")
-    lastname := r.FormValue("lastname")
-    ageStr := r.FormValue("age")
-    gender := r.FormValue("gender")
- // changed from "confirmPassword"
+    // Parse form data
+    if err := r.ParseMultipartForm(10 << 20); err != nil {
+        log.Println("Form parse error:", err)
+        writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to parse form"})
+        return
+    }
 
-// Optional: Log received values for debugging
-log.Printf("Received registration data: %+v", map[string]string{
-	"username":      username,
-	"email":         email,
-	"password len":  strconv.Itoa(len(password)),
-	"confirmpassword len": strconv.Itoa(len(confirmpassword)),
-	"firstname":     firstname,
-	"lastname":      lastname,
-	"age":           ageStr,
-	"gender":        gender,
-})
+    // Extract form values
+    formData := map[string]string{
+        "username":      r.FormValue("username"),
+        "email":         r.FormValue("email"),
+        "password":      r.FormValue("password"),
+        "confirmpassword": r.FormValue("confirmpassword"),
+        "firstname":     r.FormValue("firstname"),
+        "lastname":      r.FormValue("lastname"),
+        "age":           r.FormValue("age"),
+        "gender":        r.FormValue("gender"),
+    }
 
+   
 
-	errors := validateRegistrationInput(username, ageStr, gender, firstname, lastname, email, password, confirmpassword)
-	if len(errors) > 0 {
-		writeJSON(w, http.StatusBadRequest, errors)
-		return
-	}
+    // Validate inputs
+    errors := validateRegistrationInput(
+        formData["username"],
+        formData["age"],
+        formData["gender"],
+        formData["firstname"],
+        formData["lastname"],
+        formData["email"],
+        formData["password"],
+        formData["confirmpassword"],
+    )
 
-	age, _ := strconv.Atoi(ageStr)
+    if len(errors) > 0 {
+        writeJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errors})
+        return
+    }
 
-	// Check if nickname or email already exists
-	log.Println("Checking existing user...")
-    var existingUserCount int
-   err = db.DB.QueryRow(`SELECT COUNT(*) FROM users WHERE username = ? OR email = ?`, username, email).Scan(&existingUserCount)
-   if err != nil {
-    log.Printf("Database error checking user existence: %v", err)
-    http.Error(w, "Internal server error", http.StatusInternalServerError)
-    return
-}
-	
+    // Convert age to int
+    age, _ := strconv.Atoi(formData["age"])
 
-	// if existingUserCount > 0 {
-	// 	// Check specifically which one exists
-	// 	var temp int
-	// 	db.DB.QueryRow(`SELECT COUNT(*) FROM users WHERE email = ?`, email).Scan(&temp)
-	// 	if temp > 0 {
-	// 		errors["email"] = "Email already in use"
-	// 	}
-	// 	db.DB.QueryRow(`SELECT COUNT(*) FROM users WHERE username = ?`, username).Scan(&temp)
-	// 	if temp > 0 {
-	// 		errors["nickname"] = "Username already taken"
-	// 	}
-	// 	writeJSON(w, http.StatusBadRequest, errors)
-	// 	return
-	// }
+    // Check for existing user in transaction to prevent race conditions
+    tx, err := db.DB.Begin()
+    if err != nil {
+        log.Printf("Transaction begin error: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        return
+    }
+    defer tx.Rollback() // Safe to call if tx is already committed
 
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Printf("Password hashing error: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    // Check for existing user
+    var emailExists, usernameExists bool
+    err = tx.QueryRow(
+        `SELECT EXISTS(SELECT 1 FROM users WHERE email = ?), 
+                EXISTS(SELECT 1 FROM users WHERE username = ?)`,
+        formData["email"], formData["username"],
+    ).Scan(&emailExists, &usernameExists)
 
-	// Insert user
-	result, err := db.DB.Exec(
-		`INSERT INTO users (
-			username, email, password, first_name, last_name, age, gender, created_at
-		 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		username, email, hashedPassword, firstname, lastname, age, gender, time.Now(),
-	)
-	if err != nil {
-		log.Printf("User insert error: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    if err != nil {
+        log.Printf("Database error checking user existence: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        return
+    }
 
-	userID, err := result.LastInsertId()
-	if err != nil {
-		log.Printf("LastInsertId error: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    if emailExists || usernameExists {
+        errorResponse := map[string]interface{}{
+            "errors": make(map[string]string),
+        }
+        if emailExists {
+            errorResponse["errors"].(map[string]string)["email"] = "Email already in use"
+        }
+        if usernameExists {
+            errorResponse["errors"].(map[string]string)["username"] = "Username already taken"
+        }
+        writeJSON(w, http.StatusConflict, errorResponse)
+        return
+    }
 
-	// Create session
-	sessionID := uuid.New().String()
-	expiresAt := time.Now().Add(24 * time.Hour)
+    // Hash password
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(formData["password"]), bcrypt.DefaultCost)
+    if err != nil {
+        log.Printf("Password hashing error: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        return
+    }
 
-	_, err = db.DB.Exec(`INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)`,
-		sessionID, userID, expiresAt)
-	if err != nil {
-		log.Printf("Session creation error: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    // Insert user
+    result, err := tx.Exec(
+        `INSERT INTO users (
+            username, email, password, first_name, last_name, age, gender, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        formData["username"],
+        formData["email"],
+        string(hashedPassword),
+        formData["firstname"],
+        formData["lastname"],
+        age,
+        formData["gender"],
+        time.Now(),
+    )
 
-	// Set cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    sessionID,
-		Path:     "/",
-		Expires:  expiresAt,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-	})
+    if err != nil {
+        log.Printf("User insert error: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Registration failed"})
+        return
+    }
 
-	// Success
-	writeJSON(w, http.StatusOK, map[string]string{"status": "success"})
+    userID, err := result.LastInsertId()
+    if err != nil {
+        log.Printf("LastInsertId error: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        return
+    }
+
+    // Create session
+    sessionID := uuid.New().String()
+    expiresAt := time.Now().Add(24 * time.Hour)
+
+    _, err = tx.Exec(
+        `INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)`,
+        sessionID, userID, expiresAt,
+    )
+    if err != nil {
+        log.Printf("Session creation error: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        return
+    }
+
+    // Commit transaction
+    if err := tx.Commit(); err != nil {
+        log.Printf("Transaction commit error: %v", err)
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        return
+    }
+
+    // Set cookie
+    http.SetCookie(w, &http.Cookie{
+        Name:     "session_id",
+        Value:    sessionID,
+        Path:     "/",
+        Expires:  expiresAt,
+        HttpOnly: true,
+        Secure:   true,
+        SameSite: http.SameSiteStrictMode,
+    })
+
+    // Success response
+    writeJSON(w, http.StatusCreated, map[string]interface{}{
+        "success": true,
+        "message": "Registration successful",
+        "user": map[string]interface{}{
+            "id":       userID,
+            "username": formData["username"],
+            "email":    formData["email"],
+        },
+    })
 }
 
 // Reusable helper to write JSON responses
