@@ -7,9 +7,10 @@ import (
 	"log"
 	"os"
 	"time"
-	_ "github.com/mattn/go-sqlite3" 
 
-	
+	"real/models"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var DB *sql.DB
@@ -29,7 +30,7 @@ func Init(dbPath string) error {
 	if err = createCategories(); err != nil {
 		return fmt.Errorf("failed to create categories: %v", err)
 	}
-  log.Println("Categories initialized successfully")
+	log.Println("Categories initialized successfully")
 	// Start session cleanup scheduler
 	go ScheduleSessionCleanup(1*time.Hour, CleanupExpiredSessions)
 
@@ -93,9 +94,33 @@ func ScheduleSessionCleanup(interval time.Duration, cleanupFunc func() error) {
 	}
 }
 
-func GetUser(id int) (string, string, string, error) {
-	var name, bio, img string
-	qry := `SELECT username, COALESCE(bio, ""), COALESCE(profile_picture, "") FROM users WHERE user_id = ?`
-	err := DB.QueryRow(qry, id).Scan(&name, &bio, &img)
-	return name, bio, img, err
+// In db/db.go
+func GetUser(userID int) ([]string, error) {
+	var username, bio, profilePicture string
+	qry := `SELECT username, COALESCE(bio, ""), COALESCE(profile_picture, "") 
+            FROM users WHERE user_id = ?`
+	err := DB.QueryRow(qry, userID).Scan(&username, &bio, &profilePicture)
+	if err != nil {
+		return nil, err
+	}
+	return []string{username, bio, profilePicture}, nil
+}
+
+func GetAllCategories() ([]models.Category, error) {
+	rows, err := DB.Query("SELECT category_id, name FROM categories")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []models.Category
+	for rows.Next() {
+		var c models.Category
+		if err := rows.Scan(&c.CategoryID, &c.Name); err != nil {
+			return nil, err
+		}
+		categories = append(categories, c)
+	}
+
+	return categories, nil
 }
