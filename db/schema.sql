@@ -7,9 +7,17 @@ CREATE TABLE IF NOT EXISTS users (
 	 provider_id TEXT, -- New colum
     profile_picture TEXT,
     bio TEXT,
+	age INTEGER,
+    gender TEXT,
+    first_name TEXT,
+    last_name TEXT,
+
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+-- ALTER TABLE users ADD COLUMN age INTEGER;
+-- ALTER TABLE users ADD COLUMN first_name TEXT;
+-- ALTER TABLE users ADD COLUMN last_name TEXT;
 
 
 
