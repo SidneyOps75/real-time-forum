@@ -1,58 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NexusForum</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Forum</title>
+    <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="navbar-left">
-      <div class="icon-box">
-        💬
-      </div>
-      <span class="logo-text">NexusForum</span>
+    <div id="app">
+        <!-- Dynamic content will be injected here -->
     </div>
-    <div class="navbar-right">
-      <a href="#" class="login-link">Login</a>
-      <a href="register.html"><button class="register-btn">Register</button></a> 
-    </div>
-  </nav>
-
-  <!-- Hero Section -->
-  <section class="hero">
-    <h1>Welcome to <br /><span class="highlight">NexusForum</span></h1>
-    <p class="subtext">Connect with others, share your thoughts, and engage in real-time discussions</p>
-    <div class="hero-buttons">
-      <button class="join-btn">Join Now</button>
-      <button class="login-btn">Log in</button>
-    </div>
-
-    <!-- Features -->
-    <div class="features">
-      <div class="feature-card">
-        <div class="icon">💬</div>
-        <h3>Forum Posts</h3>
-        <p>Create and participate in forum discussions with categorized posts and threaded comments</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">💡</div>
-        <h3>Real-Time Messaging</h3>
-        <p>Send and receive private messages instantly with our real-time messaging system</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🤝</div>
-        <h3>Community</h3>
-        <p>Join a thriving community of users and build connections in a friendly environment</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="footer">
-    © 2025 NexusForum. All rights reserved.
-  </footer>
+    <script src="../js/router.js"></script>
+    <script src="../js/websocket.js"></script>
+    <script src="../js/main.js"></script>
 </body>
 </html>
