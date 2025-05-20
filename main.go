@@ -7,6 +7,7 @@ import (
 
 	"real/db"
 	"real/handlers"
+	"real/auth" // Assuming this exists
 )
 
 func main() {
@@ -21,6 +22,16 @@ func main() {
 	http.HandleFunc("/post/create", handlers.CreatePostHandler)
 	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/register", recoverMiddleware(handlers.RegisterHandler))
+	
+	// WebSocket endpoint - this was missing
+	http.HandleFunc("/ws", auth.AuthMiddleware(handlers.HandleWebSocket))
+	
+	// Message history endpoint
+	http.HandleFunc("/api/messages/", auth.AuthMiddleware(handlers.GetMessageHistory))
+	
+	// Online users endpoint
+	//http.HandleFunc("/api/users/online", auth.AuthMiddleware(handlers.GetOnlineUsersHandler))
+	
 	// Serve static files
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -30,7 +41,6 @@ func main() {
 		if r.URL.Path != "/" && r.URL.Path != "/index.html" {
 			// Check if the file exists
 			if _, err := http.Dir("./static").Open(r.URL.Path); err != nil {
-
 				http.ServeFile(w, r, "./static/index.html")
 				return
 			}
