@@ -68,11 +68,6 @@ func RedirectIfAuthenticated(next http.Handler) http.Handler {
 	})
 }
 
-func GetUserID(r *http.Request) (string, bool) {
-	userID, ok := r.Context().Value(userIDKey).(string)
-	return userID, ok
-}
-
 func IsAuthenticated(r *http.Request) bool {
 	_, ok := GetUserID(r)
 	return ok
