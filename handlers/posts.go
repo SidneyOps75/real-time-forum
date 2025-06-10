@@ -18,7 +18,7 @@ import (
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r)
-	log.Printf("Auth check - userID: %s, ok: %v", userID, ok)
+	
 	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -52,7 +52,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer file.Close()
 		
-		log.Printf("Processing image upload: %s", header.Filename)
+		
 
 		// Validate image
 		if !strings.HasSuffix(strings.ToLower(header.Filename), ".jpg") &&
@@ -65,7 +65,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		// Create upload directory if not exists
 		uploadDir := "static/images/posts"
 		if err := os.MkdirAll(uploadDir, 0o755); err != nil {
-			log.Printf("Error creating upload directory: %v", err)
+			
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -76,19 +76,18 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		newFilename := uniqueID + ext
 		dstPath := filepath.Join(uploadDir, newFilename)
 
-		log.Printf("Saving file to: %s", dstPath)
 
 		// Save file
 		dst, err := os.Create(dstPath)
 		if err != nil {
-			log.Printf("Error creating file: %v", err)
+			
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		defer dst.Close()
 
 		if _, err := io.Copy(dst, file); err != nil {
-			log.Printf("Error saving file: %v", err)
+			
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -97,14 +96,12 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		imgURL = "/static/images/posts/" + newFilename
 		
 		
-		log.Printf("Image URL set to: %s", imgURL)
+		
 		
 		// Verify file was created
 		if _, err := os.Stat(dstPath); os.IsNotExist(err) {
 			log.Printf("Warning: File was not created at %s", dstPath)
-		} else {
-			log.Printf("File successfully created at %s", dstPath)
-		}
+		} 
 	} else if err != http.ErrMissingFile {
 		log.Printf("Error processing file upload: %v", err)
 	}
@@ -112,7 +109,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Start database transaction
 	tx, err := db.DB.Begin()
 	if err != nil {
-		log.Printf("Error starting transaction: %v", err)
+		
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -121,13 +118,13 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert post
 	var result sql.Result
 	if imgURL != "" {
-		log.Printf("Inserting post with image URL: %s", imgURL)
+		
 		result, err = tx.Exec(
 			"INSERT INTO posts (user_id, title, content, imgurl) VALUES (?, ?, ?, ?)",
 			userID, title, content, imgURL,
 		)
 	} else {
-		log.Printf("Inserting post without image")
+		
 		result, err = tx.Exec(
 			"INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)",
 			userID, title, content,
@@ -135,7 +132,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Printf("Error inserting post: %v", err)
+		
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -143,7 +140,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Get post ID
 	postID, err := result.LastInsertId()
 	if err != nil {
-		log.Printf("Error getting post ID: %v", err)
+		
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -155,7 +152,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 			postID, catID,
 		)
 		if err != nil {
-			log.Printf("Error inserting category: %v", err)
+			
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -163,12 +160,12 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		log.Printf("Error committing transaction: %v", err)
+		
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Post created successfully with ID: %d, Image URL: %s", postID, imgURL)
+	
 
 	// Return success response
 	w.Header().Set("Content-Type", "application/json")
@@ -183,14 +180,14 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 func GetCategoriesHandler(w http.ResponseWriter, r *http.Request) {
     categories, err := db.GetAllCategories()
     if err != nil {
-        log.Printf("Error fetching categories: %v", err)
+        
         http.Error(w, "Failed to fetch categories", http.StatusInternalServerError)
         return
     }
 
     w.Header().Set("Content-Type", "application/json")
     if err := json.NewEncoder(w).Encode(categories); err != nil {
-        log.Printf("Error encoding categories: %v", err)
+        
         http.Error(w, "Internal server error", http.StatusInternalServerError)
     }
 }
