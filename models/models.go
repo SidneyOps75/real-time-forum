@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import( "time"
+   "database/sql"
+)
 
 type Category struct {
     CategoryID  int    `json:"category_id"`
@@ -16,4 +18,11 @@ type Post struct {
     ImageURL  string    `json:"image_url"`
     CreatedAt time.Time `json:"created_at"`
     UpdatedAt time.Time `json:"updated_at"`
+    ImgURL      sql.NullString `json:"imgurl,omitempty"`
+}
+type LikeRequest struct {
+	UserID    int    `json:"user_id"`
+	PostID    *int   `json:"post_id,omitempty"`
+	CommentID *int   `json:"comment_id,omitempty"`
+	LikeType  string `json:"like_type"`
 }
