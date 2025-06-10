@@ -39,6 +39,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Set content type first
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
+    w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -115,6 +117,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+   	// Convert userID to string for session
 
 	// Create new session
 	sessionID := uuid.New().String()
@@ -150,19 +153,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  expiresAt,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	// Successful login response
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]interface{}{
 		"success":       true,
 		"authenticated": true,
+		"token":         sessionID,
 		"user": map[string]string{
 			"id":       strconv.Itoa(userID),
 			"username": username,
 			"email":    email,
 		},
-	})
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
