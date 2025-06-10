@@ -1,255 +1,331 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forum</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        /* Basic styling for hidden/showing sections */
-        .page-section {
-            display: none;
-        }
-        .active-section {
-            display: block;
-        }
-        /* Chat sidebar styling */
-        #chat-sidebar {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 300px;
-            height: 100vh;
-            background: #f5f5f5;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        /* Filters sidebar styling */
-        #filters-sidebar {
-            width: 250px;
-            padding: 20px;
-            background: #f5f5f5;
-            float: left;
-        }
-        /* Content layout */
-        .container {
-            display: flex;
-            width: 100%;
-        }
-        #main-content {
-            flex: 1;
-            padding: 20px;
-        }
-        .auth-center-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 50px 0;
-        }
-        .auth-buttons {
-            text-align: center;
-        }
-        .auth-btn {
-            padding: 10px 20px;
-            margin: 0 10px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Professional Forum</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
-    <header>
-        <h1>Welcome to the Forum <span id="user-name"></span></h1>
-        <nav>
-            <a href="#" class="nav-link" data-page="home">Home</a>
-            <div id="auth-buttons">
-                <a href="#" class="nav-link" data-page="login" id="login-btn">Login</a>
-                <a href="#" class="nav-link" data-page="register" id="register-btn">Register</a>
-                <form id="logout-form" style="display:none">
-                    <button type="submit">Logout</button>
-                </form>
-            </div>
-        </nav>
-    </header>
+<body class="authenticated"> 
 
-    <div class="container">
-        <!-- Filters Sidebar (Visible on Home Page) -->
-        <aside id="filters-sidebar" class="sidebar">
-            <h2>Filters</h2>
-            <form id="filters-form">
-                <div class="category">
-                    <label for="category">Category:</label>
-                    <select name="category" id="category">
-                        <option value="">-- All --</option>
-                        <!-- Categories will be populated by JavaScript -->
-                    </select>
-                </div>
-                <div class="posts">
-                    <label for="created">My Posts Only:</label>
-                    <input type="checkbox" name="created" id="created" value="true">
-                </div>
-                <div class="liked">
-                    <label for="liked">Posts I've Liked:</label>
-                    <input type="checkbox" name="liked" id="liked" value="true">
-                </div>
-                <button type="submit">Apply Filters</button>
-            </form>
-        </aside>
-              
-        <!-- Main Content Area -->
-        <main id="main-content">
-           
-                <div id="authenticated-content" style="display:none">
-                    <h2>Forum Home Page</h2>
-                    <button id="create-post-btn">Create Post</button>
-                    <div id="posts-container"></div>
-                </div>
-            </section>
+  <!-- Top Navigation Bar -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="logo-container">
+        <i class="fas fa-comments logo-icon"></i>
+        <h1>ProForum</h1>
+      </div>
+      
+      <nav class="main-nav">
+        <a href="#" class="nav-link active" data-page="home">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+        </a>
+        
+        <div id="auth-buttons" class="auth-nav">
+          <a href="#" class="nav-link" data-page="login" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Login</span>
+          </a>
+          <a href="#" class="nav-link primary-btn" data-page="register" id="register-btn">
+            <i class="fas fa-user-plus"></i>
+            <span>Register</span>
+          </a>
+          <form id="logout-form" style="display: none;">
+            <button type="submit" class="secondary-btn">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Logout</span>
+            </button>
+          </form>
+        </div>
+      </nav>
+      
+      <div class="user-profile">
+        <span id="user-name">User</span>
+        <div class="profile-pic"></div>
+      </div>
+    </div>
+  </header>
 
-            <!-- Login Page -->
-            <section id="login-page" class="page-section">
-                <h2>Login</h2>
-                <form id="login-form">
-                    <label for="identifier">Email or Username:</label>
-                    <input type="text" id="identifier" name="identifier" required>
-                    <span id="identifier-error" class="error-message"></span>
-                    <br>
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
-                    <span id="password-error" class="error-message"></span>
-                    <br>
-                    <button type="submit">Login</button>
-                    <p>Don't have an account? <a href="#" class="nav-link" data-page="register">Sign up here</a></p>
-                </form>
-            </section>
+  <main class="container">
+    <!-- Sidebar Filters -->
+    <aside id="filters-sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h2>Filters</h2>
+        <button class="sidebar-close"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="filters-form" class="sidebar-form">
+        <div class="form-group">
+          <label for="category-filter">Category:</label>
+          <select name="category" id="category-filter" class="form-select">
+            <option value="">-- All Categories --</option>
+          </select>
+        </div>
 
-           <!-- Register Page -->
-<section id="register-page" class="page-section">
-    <form id="register-form" method="POST" action="/register" enctype="multipart/form-data">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username" required>
-      <span id="username-error" class="error-message"></span>
-      <br>
-  
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" required>
-      <span id="email-error" class="error-message"></span>
-      <br>
-  
-      <label for="reg-password">Password</label>
-      <input type="password" id="reg-password" name="password" required>
-      <span id="reg-password-error" class="error-message"></span>
-      <br>
-  
-      <label for="confirmpassword">Confirm Password</label>
-      <input type="password" id="confirmpassword" name="confirmpassword" required>
-      <span id="confirmpassword-error" class="error-message"></span>
-      <br>
-  
-      <label for="firstname">First Name</label>
-      <input type="text" id="firstname" name="firstname" required>
-      <span id="firstname-error" class="error-message"></span>
-      <br>
-  
-      <label for="lastname">Last Name</label>
-      <input type="text" id="lastname" name="lastname" required>
-      <span id="lastname-error" class="error-message"></span>
-      <br>
-  
-      <label for="age">Age</label>
-      <input type="number" id="age" name="age" required>
-      <span id="age-error" class="error-message"></span>
-      <br>
-  
-      <label for="gender">Gender</label>
-      <select id="gender" name="gender" required>
-        <option value="">Select Gender</option>
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-        <option value="other">Other</option>
-      </select>
-      <span id="gender-error" class="error-message"></span>
-      <br>
-  
-      <!-- Other fields... -->
-      <button type="submit">Register</button>
-    </form>
-  </section>
-            <!-- Create Post Page -->
-            <form id="create-post-form" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="post-title">Title</label>
-                    <input type="text" id="post-title" name="title" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-content">Content</label>
-                    <textarea id="post-content" name="content" required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>Categories</label>
-                    {{range .Categories}}
-                    <div class="category-option">
-                        <input type="checkbox" id="category-{{.CategoryID}}" 
-                               name="category" value="{{.CategoryID}}">
-                        <label for="category-{{.CategoryID}}">{{.Name}}</label>
-                    </div>
-                    {{end}}
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-image">Image (optional)</label>
-                    <input type="file" id="post-image" name="img" accept="image/*">
-                </div>
-                
-                <button type="submit">Create Post</button>
-            </form>
-            
-    <!-- Add this with your other page sections -->
-<section id="create-post-page" class="page-section">
-    <h2>Create New Post</h2>
-    <form id="create-post-form" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="post-title">Title</label>
-            <input type="text" id="post-title" name="title" required>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="my-posts-only" class="form-checkbox" />
+          <label for="my-posts-only">My Posts Only</label>
         </div>
-        
-        <div class="form-group">
-            <label for="post-content">Content</label>
-            <textarea id="post-content" name="content" rows="5" required></textarea>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="liked-posts-only" class="form-checkbox" />
+          <label for="liked-posts-only">Liked Posts</label>
         </div>
-        
-        <div class="form-group">
-            <label>Categories</label>
-            <div id="categories-container">
-                <!-- Categories will be populated by JavaScript -->
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="post-image">Image (optional)</label>
-            <input type="file" id="post-image" name="img" accept="image/*">
-        </div>
-        
-        <button type="submit">Create Post</button>
-    </form>
-</section>
-    <!-- Chat Sidebar (Visible when logged in) -->
-    <aside id="chat-sidebar">
-        <div class="user-list">
-            <h3>Online Users</h3>
-            <ul id="online-users-list"></ul>
-        </div>
-        <div class="chat-area">
-            <div id="message-history"></div>
-            <form id="message-form">
-                <input type="text" id="message-input" placeholder="Type a message...">
-                <button type="submit">Send</button>
-            </form>
-        </div>
+
+        <button type="submit" id="apply-filters" class="primary-btn full-width">Apply Filters</button>
+        <button type="reset" id="reset-filters" class="secondary-btn full-width">Reset</button>
+      </form>
     </aside>
 
-    <script src="/static/main.js"></script>
-    <!-- <script src="/static/js/websocket.js"></script> -->
+    <section id="main-content" class="content-area">
+
+      <!-- Home Page -->
+      <section id="home-page" class="page-section active-section">
+        <div class="content-header">
+          <h2>Community Discussions</h2>
+          <button id="create-post-btn" class="primary-btn">
+            <i class="fas fa-plus"></i> Create Post
+          </button>
+        </div>
+        <div id="posts-container" class="posts-grid"></div>
+      </section>
+
+      <!-- Login Page -->
+      <section id="login-page" class="page-section auth-section">
+        <div class="auth-card">
+          <div class="auth-header">
+            <i class="fas fa-sign-in-alt auth-icon"></i>
+            <h2>Welcome Back</h2>
+          </div>
+          <form id="login-form" class="auth-form">
+            <div class="form-group">
+              <label>Email or Username</label>
+              <input type="text" id="identifier" class="form-input" required placeholder="Enter your email or username" />
+              <span id="identifier-error" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="password" class="form-input" required placeholder="Enter your password" />
+              <span id="password-error" class="error-message"></span>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-btn full-width">Login</button>
+            </div>
+            
+            <div class="auth-footer">
+              <p>Don't have an account? <a href="#" class="text-link nav-link" data-page="register">Sign up here</a></p>
+              <a href="#" class="text-link">Forgot password?</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    <!-- Register Page -->
+<section id="register-page" class="page-section auth-section">
+  >
+  <div class="auth-card">
+    <div class="auth-header">
+      <i class="fas fa-user-plus auth-icon"></i>
+      <h2>Join Our Community</h2>
+      <p>Connect with professionals in your field</p>
+    </div>
+    <form id="register-form" class="auth-form" enctype="multipart/form-data">
+      <div class="form-row">
+        <div class="form-group half-width">
+          <label>First Name</label>
+          <input type="text" id="firstname" name="firstname" class="form-input" required placeholder="John" />
+          <span id="firstname-error" class="error-message"></span>
+        </div>
+        <div class="form-group half-width">
+          <label>Last Name</label>
+          <input type="text" id="lastname" name="lastname" class="form-input" required placeholder="Doe" />
+          <span id="lastname-error" class="error-message"></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" name="username" class="form-input" required placeholder="johndoe" />
+        <span id="username-error" class="error-message"></span>
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" name="email" class="form-input" required placeholder="john@example.com" />
+        <span id="email-error" class="error-message"></span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half-width">
+          <label>Password</label>
+          <input type="password" id="reg-password" name="password" class="form-input" required placeholder="••••••••" />
+          <span id="reg-password-error" class="error-message"></span>
+        </div>
+        <div class="form-group half-width">
+          <label>Confirm Password</label>
+          <input type="password" id="confirmpassword" name="confirmpassword" class="form-input" required placeholder="••••••••" />
+          <span id="confirmpassword-error" class="error-message"></span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half-width">
+          <label>Age</label>
+          <input type="number" id="age" name="age" class="form-input" required placeholder="30" min="13" />
+          <span id="age-error" class="error-message"></span>
+        </div>
+        <div class="form-group half-width">
+          <label>Gender</label>
+          <select id="gender" name="gender" class="form-select" required>
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer-not-to-say">Prefer not to say</option>
+          </select>
+          <span id="gender-error" class="error-message"></span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="primary-btn full-width">Create Account</button>
+      </div>
+      
+      <div class="auth-footer">
+        <p>Already have an account? <a href="#" class="text-link nav-link" data-page="login">Sign in here</a></p>
+      </div>
+    </form>
+  </div>
+
+</section>
+
+<section id="create-post-page" class="page-section">
+  <div class="content-header">
+    <h2>Create New Post</h2>
+    <button id="cancel-post-btn" class="secondary-btn">Cancel</button>
+  </div>
+  
+  <!-- CRITICAL FIX: Added 'name' attributes and enctype -->
+  <form id="create-post-form" class="post-form" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="post-title">Title</label>
+      <input 
+        type="text" 
+        id="post-title" 
+        name="title"
+        class="form-input" 
+        required 
+        placeholder="What's your post about?" 
+      />
+    </div>
+    
+    <div class="form-group">
+      <label for="post-content">Content</label>
+      <textarea 
+        id="post-content" 
+        name="content"
+        rows="8" 
+        class="form-textarea" 
+        required 
+        placeholder="Share your thoughts..."
+      ></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>Categories (Select up to 3)</label>
+      <div id="categories-container" class="categories-selector">
+        
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="post-image">Image (optional)</label>
+      <div class="file-upload">
+        <label for="post-image" class="file-upload-label">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>Choose an image</span>
+        </label>
+        
+          type="file" 
+          id="post-image" 
+          name="img"
+          accept="image/*" 
+        />
+        <div id="file-name" class="file-name">No file selected</div>
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <button type="submit" class="primary-btn full-width">Publish Post</button>
+    </div>
+  </form>
+</section>
+
+
+    <!-- Chat Sidebar -->
+    <aside id="private-chat-container" class="chat-sidebar">
+      <div class="chat-header">
+        <h3><i class="fas fa-comments"></i> Messages</h3>
+        <button class="chat-close"><i class="fas fa-times"></i></button>
+      </div>
+      
+      <div id="user-list-container" class="chat-user-list">
+        <div class="chat-search">
+          <input type="text" placeholder="Search users..." />
+          <i class="fas fa-search"></i>
+        </div>
+        <ul id="user-list" class="online-users">
+          <!-- Users will be populated here -->
+        </ul>
+      </div>
+
+      <div id="chat-window" class="chat-conversation">
+        <div id="chat-header" class="conversation-header">
+          <div class="user-info">
+            <div class="user-avatar"></div>
+            <div>
+              <h4>Select a user to chat</h4>
+              <p class="user-status">Online</p>
+            </div>
+          </div>
+        </div>
+        <div id="chat-messages" class="message-history">
+          <div class="empty-state">
+            <i class="fas fa-comment-dots"></i>
+            <p>Select a conversation to start chatting</p>
+          </div>
+        </div>
+        <div id="chat-input" class="message-input">
+          <input type="text" id="message-input" placeholder="Type a message..." />
+          <button id="send-button" class="send-btn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav">
+    <a href="#" class="mobile-nav-link active" data-page="home">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    <a href="#" class="mobile-nav-link" id="mobile-filter-btn">
+      <i class="fas fa-filter"></i>
+      <span>Filters</span>
+    </a>
+    <a href="#" class="mobile-nav-link" id="mobile-chat-btn">
+      <i class="fas fa-comments"></i>
+      <span>Messages</span>
+    </a>
+    <a href="#" class="mobile-nav-link" data-page="login" id="mobile-login-btn">
+      <i class="fas fa-user"></i>
+      <span>Account</span>
+    </a>
+  </nav>
+  <script src="/static/main.js"></script>
 </body>
 </html>
