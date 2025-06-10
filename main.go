@@ -1,3 +1,4 @@
+// main.go
 package main
 
 import (
@@ -10,27 +11,31 @@ import (
 )
 
 func main() {
-	// Initialize database
 	if err := db.Init("./forum.db"); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
 	defer db.DB.Close()
 
+	// Serve static files
+     fs := http.FileServer(http.Dir("./static"))
+     http.Handle("/static/", http.StripPrefix("/static/", fs))
+     http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("static/images/"))))
+	
+
+
 	// Set up API routes
 	http.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
+	http.HandleFunc("/api/posts", handlers.GetPostsHandler) 
 	http.HandleFunc("/post/create", handlers.CreatePostHandler)
-	http.HandleFunc("/login", handlers.LoginHandler)
+	http.HandleFunc("/login", recoverMiddleware(handlers.LoginHandler))
 	http.HandleFunc("/register", recoverMiddleware(handlers.RegisterHandler))
-	// Serve static files
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
+	http.HandleFunc("/like", handlers.LikeHandler)
+	http.HandleFunc("/comment/create",handlers.CreateCommentHandler)
+	http.HandleFunc("/comment/like",handlers.CommentReactionHandler)
+	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// If it's not an actual file/resource being requested, serve the SPA
 		if r.URL.Path != "/" && r.URL.Path != "/index.html" {
-			// Check if the file exists
 			if _, err := http.Dir("./static").Open(r.URL.Path); err != nil {
-
 				http.ServeFile(w, r, "./static/index.html")
 				return
 			}
@@ -40,8 +45,8 @@ func main() {
 	})
 
 	// Start server
-	log.Println("Server started at http://localhost:8081")
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	log.Println("Server started at http://localhost:8082")
+	log.Fatal(http.ListenAndServe(":8082", nil))
 }
 
 func recoverMiddleware(next http.HandlerFunc) http.HandlerFunc {
