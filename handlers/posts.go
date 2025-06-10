@@ -17,20 +17,15 @@ import (
 )
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
-	// Authentication check
 	userID, ok := auth.GetUserID(r)
+	log.Printf("Auth check - userID: %s, ok: %v", userID, ok)
 	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Parse form with file upload
-	if err := r.ParseMultipartForm(20 << 20); err != nil { // 20MB max
+	if err := r.ParseMultipartForm(20 << 20); err != nil { 
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
@@ -56,6 +51,8 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("img")
 	if err == nil {
 		defer file.Close()
+		
+		log.Printf("Processing image upload: %s", header.Filename)
 
 		// Validate image
 		if !strings.HasSuffix(strings.ToLower(header.Filename), ".jpg") &&
@@ -66,7 +63,8 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Create upload directory if not exists
-		if err := os.MkdirAll("static/images/posts", 0o755); err != nil {
+		uploadDir := "static/images/posts"
+		if err := os.MkdirAll(uploadDir, 0o755); err != nil {
 			log.Printf("Error creating upload directory: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -76,7 +74,9 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		uniqueID := uuid.New().String()
 		ext := filepath.Ext(header.Filename)
 		newFilename := uniqueID + ext
-		dstPath := filepath.Join("static", "images", "posts", newFilename)
+		dstPath := filepath.Join(uploadDir, newFilename)
+
+		log.Printf("Saving file to: %s", dstPath)
 
 		// Save file
 		dst, err := os.Create(dstPath)
@@ -93,7 +93,20 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		imgURL = "/images/posts/" + newFilename
+		
+		imgURL = "/static/images/posts/" + newFilename
+		
+		
+		log.Printf("Image URL set to: %s", imgURL)
+		
+		// Verify file was created
+		if _, err := os.Stat(dstPath); os.IsNotExist(err) {
+			log.Printf("Warning: File was not created at %s", dstPath)
+		} else {
+			log.Printf("File successfully created at %s", dstPath)
+		}
+	} else if err != http.ErrMissingFile {
+		log.Printf("Error processing file upload: %v", err)
 	}
 
 	// Start database transaction
@@ -108,11 +121,13 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert post
 	var result sql.Result
 	if imgURL != "" {
+		log.Printf("Inserting post with image URL: %s", imgURL)
 		result, err = tx.Exec(
 			"INSERT INTO posts (user_id, title, content, imgurl) VALUES (?, ?, ?, ?)",
 			userID, title, content, imgURL,
 		)
 	} else {
+		log.Printf("Inserting post without image")
 		result, err = tx.Exec(
 			"INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)",
 			userID, title, content,
@@ -153,15 +168,17 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Post created successfully with ID: %d, Image URL: %s", postID, imgURL)
+
 	// Return success response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"message": "Post created successfully",
-		"post_id": postID,
+		"success":  true,
+		"message":  "Post created successfully",
+		"post_id":  postID,
+		"image_url": imgURL,
 	})
 }
-
 
 func GetCategoriesHandler(w http.ResponseWriter, r *http.Request) {
     categories, err := db.GetAllCategories()
