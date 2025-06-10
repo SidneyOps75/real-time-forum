@@ -14,18 +14,18 @@ import (
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-    // Set content type first
+    
     w.Header().Set("Content-Type", "application/json")
 
     if r.Method != http.MethodPost {
-        writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "Only POST method allowed"})
+        WriteJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "Only POST method allowed"})
         return
     }
 
     // Parse form data
     if err := r.ParseMultipartForm(10 << 20); err != nil {
         log.Println("Form parse error:", err)
-        writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to parse form"})
+        WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to parse form"})
         return
     }
 
@@ -41,8 +41,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
         "gender":        r.FormValue("gender"),
     }
 
-   
-
     // Validate inputs
     errors := validateRegistrationInput(
         formData["username"],
@@ -56,18 +54,16 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     )
 
     if len(errors) > 0 {
-        writeJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errors})
+        WriteJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errors})
         return
     }
-
-    // Convert age to int
     age, _ := strconv.Atoi(formData["age"])
 
     // Check for existing user in transaction to prevent race conditions
     tx, err := db.DB.Begin()
     if err != nil {
         log.Printf("Transaction begin error: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
         return
     }
     defer tx.Rollback() // Safe to call if tx is already committed
@@ -82,7 +78,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
     if err != nil {
         log.Printf("Database error checking user existence: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
         return
     }
 
@@ -96,7 +92,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
         if usernameExists {
             errorResponse["errors"].(map[string]string)["username"] = "Username already taken"
         }
-        writeJSON(w, http.StatusConflict, errorResponse)
+        WriteJSON(w, http.StatusConflict, errorResponse)
         return
     }
 
@@ -104,7 +100,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     hashedPassword, err := bcrypt.GenerateFromPassword([]byte(formData["password"]), bcrypt.DefaultCost)
     if err != nil {
         log.Printf("Password hashing error: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
         return
     }
 
@@ -125,14 +121,14 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
     if err != nil {
         log.Printf("User insert error: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Registration failed"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Registration failed"})
         return
     }
 
     userID, err := result.LastInsertId()
     if err != nil {
         log.Printf("LastInsertId error: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
         return
     }
 
@@ -146,14 +142,14 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     )
     if err != nil {
         log.Printf("Session creation error: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
         return
     }
 
     // Commit transaction
     if err := tx.Commit(); err != nil {
         log.Printf("Transaction commit error: %v", err)
-        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+        WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
         return
     }
 
@@ -169,7 +165,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     })
 
     // Success response
-    writeJSON(w, http.StatusCreated, map[string]interface{}{
+    WriteJSON(w, http.StatusCreated, map[string]interface{}{
         "success": true,
         "message": "Registration successful",
         "user": map[string]interface{}{
@@ -181,7 +177,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Reusable helper to write JSON responses
-func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+func WriteJSON(w http.ResponseWriter, status int, data interface{}) {
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(status)
     if err := json.NewEncoder(w).Encode(data); err != nil {
