@@ -21,7 +21,7 @@ func Init(dbPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
-	log.Println("Database connection established")
+	
 
 	if err = createTables(); err != nil {
 		return fmt.Errorf("failed to create tables: %v", err)
@@ -30,7 +30,7 @@ func Init(dbPath string) error {
 	if err = createCategories(); err != nil {
 		return fmt.Errorf("failed to create categories: %v", err)
 	}
-	log.Println("Categories initialized successfully")
+	
 	// Start session cleanup scheduler
 	go ScheduleSessionCleanup(1*time.Hour, CleanupExpiredSessions)
 
@@ -94,7 +94,6 @@ func ScheduleSessionCleanup(interval time.Duration, cleanupFunc func() error) {
 	}
 }
 
-// In db/db.go
 func GetUser(userID int) ([]string, error) {
 	var username, bio, profilePicture string
 	qry := `SELECT username, COALESCE(bio, ""), COALESCE(profile_picture, "") 
