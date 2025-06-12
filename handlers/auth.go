@@ -121,7 +121,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create new session
 	sessionID := uuid.New().String()
-	expiresAt := time.Now().Add(24 * time.Hour)
+	expiresAt := time.Now().Add(7 * 24 * time.Hour)
 
 	// Delete any existing sessions
 	if _, err := db.DB.Exec(`DELETE FROM sessions WHERE user_id = ?`, userID); err != nil {
