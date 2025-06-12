@@ -26,3 +26,27 @@ type LikeRequest struct {
 	CommentID *int   `json:"comment_id,omitempty"`
 	LikeType  string `json:"like_type"`
 }
+type Response struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+// Message structure
+type PrivateMessage struct {
+	ID             int       `json:"id"`
+	SenderID       int       `json:"senderId"`
+	ReceiverID     int       `json:"receiverId"`
+	Content        string    `json:"content"`
+	CreatedAt      time.Time `json:"timestamp"`
+	Read           bool      `json:"read"`
+	SenderUsername string    `json:"senderUsername,omitempty"` // Not a DB column, used for client-side display
+}
+type UserChatInfo struct { 
+    UserID          int       `json:"userId"`
+    Username        string    `json:"username"`
+    IsOnline        bool      `json:"isOnline"`
+    LastMessage     string    `json:"lastMessage"`
+    LastMessageTime time.Time `json:"lastMessageTime"`
+    UnreadCount     int       `json:"unreadCount"`
+}
