@@ -1,4 +1,4 @@
-// handlers/chat.go
+
 package handlers
 
 import (
@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	// This is the external library, we will use its default name 'websocket'
+	
 	"github.com/gorilla/websocket"
 
 	
@@ -20,7 +20,7 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true }, // Allow all origins for development
+	CheckOrigin:     func(r *http.Request) bool { return true }, 
 }
 
 
