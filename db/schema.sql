@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id INTEGER NOT NULL,
     expires_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    
 );
 
 -- Private messages table
@@ -90,9 +91,11 @@ CREATE TABLE IF NOT EXISTS private_messages (
     receiver_id INTEGER NOT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    read BOOLEAN DEFAULT FALSE, 
     FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
 
 -- User status table
 CREATE TABLE IF NOT EXISTS user_status (
