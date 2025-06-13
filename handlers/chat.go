@@ -27,7 +27,7 @@ var upgrader = websocket.Upgrader{
 func ServeWs(hub *rt_hub.Hub, w http.ResponseWriter, r *http.Request) {
     cookie, err := r.Cookie("session_id")
     if err != nil {
-        log.Printf("WebSocket connection failed: Unauthorized (%v)", err)
+        //log.Printf("WebSocket connection failed: Unauthorized (%v)", err)
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
@@ -60,14 +60,14 @@ func ServeWs(hub *rt_hub.Hub, w http.ResponseWriter, r *http.Request) {
 func HandleGetUsers(w http.ResponseWriter, r *http.Request) {
     currentUserID, err := db.GetCurrentUserIDFromSession(r)
     if err != nil {
-        log.Printf("Error getting current user ID: %v", err)
+       
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
 
     users, err := db.GetUsersForChat(currentUserID)
     if err != nil {
-        log.Printf("Error fetching users for chat: %v", err)
+        
         http.Error(w, "Database error", http.StatusInternalServerError)
         return
     }
@@ -104,7 +104,7 @@ func HandleGetMessages(w http.ResponseWriter, r *http.Request) {
 	messages, err := db.GetPrivateMessages(currentUserID, otherUserID, limit, offset)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Printf("Error getting private messages: %v", err)
+		
 		return
 	}
 
