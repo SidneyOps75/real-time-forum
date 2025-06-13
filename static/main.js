@@ -1031,8 +1031,7 @@ function handleMessageListScroll() {
     }
 }
 
-// *** THE FIX IS HERE ***
-// This function is robustly designed to handle loading older messages.
+
 async function loadMoreMessages() {
     // 1. Prevent multiple simultaneous loads
     if (isLoadingMessages) return;
@@ -1048,7 +1047,7 @@ async function loadMoreMessages() {
 
     const offset = messageOffsets.get(userId) || 0;
 
-    // 2. Store the current scroll height BEFORE adding new messages
+   
     const scrollHeightBefore = messageList.scrollHeight;
     
     try {
@@ -1065,18 +1064,14 @@ async function loadMoreMessages() {
                 appendMessage(msg.senderUsername, msg.content, msg.timestamp, msg.senderId === currentUserId, true);
             });
 
-            // 4. Update the offset for the next request
             messageOffsets.set(userId, offset + messages.length);
 
-            // 5. THE MAGIC: Adjust the scroll position to maintain the view.
-            // The new scroll position is the new total height minus the old total height.
-            // This keeps the message that was previously at the top of the viewport in the same position.
             const scrollHeightAfter = messageList.scrollHeight;
             messageList.scrollTop = scrollHeightAfter - scrollHeightBefore;
 
         } else {
             console.log("No more older messages to load.");
-            // Optional: You could show a "No more messages" indicator here.
+           
         }
 
     } catch (error) {
