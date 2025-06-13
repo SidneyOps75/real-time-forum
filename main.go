@@ -27,13 +27,12 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("static/images/"))))
 
-	// --- API and Page Routes ---
+	
 
 	// Existing Handlers
 	http.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	http.HandleFunc("/api/posts", handlers.GetPostsHandler)
 	http.HandleFunc("/post/create", handlers.CreatePostHandler)
-	// You might want to apply your recoverMiddleware to all handlers
 	http.HandleFunc("/login", handlers.LoginHandler) 
 	http.HandleFunc("/register", handlers.RegisterHandler) 
 	http.HandleFunc("/like", handlers.LikeHandler)
@@ -46,14 +45,12 @@ func main() {
 	})
 	http.HandleFunc("/api/users", handlers.HandleGetUsers)
 	http.HandleFunc("/api/messages", handlers.HandleGetMessages)
-
-	// Serve the main index.html for the SPA
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/index.html")
 	})
 
 	// Start server
-	log.Println("Server started at http://localhost:9099")
-	log.Fatal(http.ListenAndServe(":9099", nil))
+	log.Println("Server started at http://localhost:9094")
+	log.Fatal(http.ListenAndServe(":9094", nil))
 
 }
