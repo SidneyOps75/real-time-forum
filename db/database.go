@@ -133,7 +133,7 @@ func GetCurrentUserIDFromSession(r *http.Request) (int, error) {
         log.Printf("Error retrieving session_token cookie: %v", err)
         return 0, err
     }
-    log.Printf("Session token found: %s", cookie.Value)
+   
 
     sessionID := cookie.Value
 
@@ -150,7 +150,7 @@ func GetCurrentUserIDFromSession(r *http.Request) (int, error) {
         return 0, fmt.Errorf("session expired")
     }
 
-    log.Printf("User ID retrieved: %d", userID)
+  
     return userID, nil
 }
 
