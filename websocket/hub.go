@@ -46,7 +46,7 @@ func (h *Hub) Run() {
 			h.Clients[client.UserID] = client
 			h.mu.Unlock()
 			db.UpdateUserStatus(client.UserID, true)
-			log.Printf("User %d connected to WebSocket.", client.UserID)
+			
 
 		case client := <-h.Unregister:
 			h.mu.Lock()
@@ -61,7 +61,7 @@ func (h *Hub) Run() {
 	}
 }
 
-// --- WebSocket Message Payloads ---
+
 type WebSocketMessage struct {
 	Type    string          `json:"type"`
 	Payload json.RawMessage `json:"payload"`
@@ -106,7 +106,7 @@ func (c *Client) ReadPump() {
 				continue
 			}
 
-			// 1. Get sender's username
+			
 			senderUsername, err := db.GetUsernameByID(c.UserID)
 			if err != nil {
 				log.Printf("Error getting sender's username: %v", err)
