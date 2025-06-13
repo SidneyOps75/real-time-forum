@@ -27,7 +27,7 @@ var upgrader = websocket.Upgrader{
 func ServeWs(hub *rt_hub.Hub, w http.ResponseWriter, r *http.Request) {
     cookie, err := r.Cookie("session_id")
     if err != nil {
-        //log.Printf("WebSocket connection failed: Unauthorized (%v)", err)
+        
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
