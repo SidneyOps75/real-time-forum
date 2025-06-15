@@ -43,6 +43,7 @@ func main() {
 	})
 	http.HandleFunc("/api/users", handlers.HandleGetUsers)
 	http.HandleFunc("/api/messages", handlers.HandleGetMessages)
+	http.HandleFunc("/api/validate-session", handlers.ValidateSessionHandler)
 
 	// Serve index.html for all other routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

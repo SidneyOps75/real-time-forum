@@ -25,22 +25,77 @@
                     <i class="fas fa-user-plus"></i><span>Register</span>
                 </a>
                 
-                <!-- Logged In Buttons/Actions -->
-                <form id="logout-form" class="logged-in" style="display: none;">
-                    <button type="submit" class="secondary-btn">
-                        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-                    </button>
-                </form>
+                <!-- Logged In User Profile -->
+                <div class="user-profile-container logged-in" style="display: none;">
+                    <div class="user-profile-dropdown">
+                        <button class="user-profile-btn" id="user-profile-btn">
+                            <div class="user-avatar-nav">
+                                <span id="user-avatar-initial">U</span>
+                            </div>
+                            <div class="user-info-nav">
+                                <span class="user-name-nav" id="user-name-nav">Username</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </div>
+                        </button>
+                        
+                        <div class="user-dropdown-menu" id="user-dropdown-menu">
+                            <div class="dropdown-header">
+                                <div class="user-avatar-large">
+                                    <span id="user-avatar-large-initial">U</span>
+                                </div>
+                                <div class="user-details">
+                                    <span class="user-full-name" id="user-full-name">User Name</span>
+                                    <span class="user-email" id="user-email">user@example.com</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-actions">
+                                <button class="dropdown-item" id="view-profile-btn">
+                                    <i class="fas fa-user"></i>
+                                    <span>View Profile</span>
+                                </button>
+                                <button class="dropdown-item" id="settings-btn">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Settings</span>
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <form id="logout-form">
+                                    <button type="submit" class="dropdown-item logout-item">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </nav>
         </div>
     </header>
 
     <div class="container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar" id="filters-sidebar">
+            <div class="sidebar-section">
+                <h3>Categories</h3>
+                <div id="category-filters" class="filter-group">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <h3>Quick Actions</h3>
+                <div class="quick-actions">
+                    <button class="secondary-btn full-width logged-in" style="display: none;" onclick="showPage('create-post')">
+                        <i class="fas fa-plus"></i> New Post
+                    </button>
+                </div>
+            </div>
+        </aside>
        
         <main id="main-content" class="content-area">
 
             <!-- Home Page -->
-            <section id="home-page" class="page-section">
+            <section id="home-page" class="page-section active-section">
                 <div class="content-header">
                     <h2>Community Discussions</h2>
                     <button id="create-post-btn" class="primary-btn logged-in" style="display: none;">
@@ -114,8 +169,26 @@
             </section>
         </main>
         
+        <!-- Right Sidebar -->
+        <aside class="sidebar" id="activity-sidebar">
+            <div class="sidebar-section">
+                <h3>Recent Activity</h3>
+                <div id="recent-activity" class="activity-feed">
+                    <p class="text-secondary">No recent activity</p>
+                </div>
+            </div>
+            <div class="sidebar-section logged-in" style="display: none;">
+                <h3>Online Users</h3>
+                <div id="online-users" class="user-list-mini">
+                    <!-- Online users will be loaded here -->
+                </div>
+            </div>
+        </aside>
       
-        <div id="chat-system-container" class="logged-in" style="display: none;">
+    </div> 
+
+    <!-- Chat System (Fixed Position Overlay) -->
+    <div id="chat-system-container" class="logged-in" style="display: none;">
             <!-- Left Column: List of users to chat with -->
             <aside id="user-list-panel">
                 <div class="panel-header">
@@ -152,9 +225,7 @@
                     </footer>
                 </div>
             </main>
-        </div>
-
-    </div> 
+        </div> 
     <script type="module" src="/js/helpers.js"></script>
     <script type="module" src="/js/auth.js"></script>
     <script type="module" src="/js/post.js"></script>

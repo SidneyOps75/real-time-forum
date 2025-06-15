@@ -2,6 +2,36 @@ export function isLoggedIn() {
     return localStorage.getItem('isAuthenticated') === 'true';
 }
 
+// Validate session with server
+export async function validateSession() {
+    try {
+        const response = await fetch('/api/validate-session', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.valid) {
+                localStorage.setItem('isAuthenticated', 'true');
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
+                return true;
+            }
+        }
+        
+        // Session is invalid, clear local storage
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        return false;
+    } catch (error) {
+        console.error('Session validation error:', error);
+        return false;
+    }
+}
+
 export function getUserId() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     return user.id || 0;
@@ -59,11 +89,20 @@ export function handleLogout() {
 }
 
 export async function handleRegister() {
+    const submitBtn = document.querySelector('#register-form button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : 'Create Account';
+    
     try {
         const form = document.getElementById('register-form');
         if (!form) {
             console.error('Register form not found!');
-            return;
+            throw new Error('Registration form not found');
+        }
+
+        // Update button state
+        if (submitBtn) {
+            submitBtn.textContent = 'Creating Account...';
+            submitBtn.disabled = true;
         }
 
         const formData = new FormData(form);
@@ -94,7 +133,9 @@ export async function handleRegister() {
             }
         }
 
-        if (hasErrors) return false;
+        if (hasErrors) {
+            throw new Error('Please fix the form errors');
+        }
 
         const response = await fetch('/register', {
             method: 'POST',
@@ -113,9 +154,16 @@ export async function handleRegister() {
             throw new Error(data.error || 'Registration failed');
         }
 
+        console.log('Registration successful:', data);
         return data;
     } catch (error) {
         console.error('Registration error:', error);
         throw error;
+    } finally {
+        // Reset button state
+        if (submitBtn) {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
     }
 }
