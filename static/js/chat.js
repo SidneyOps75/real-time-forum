@@ -70,15 +70,38 @@ export function initializeChat(userId) {
 
 function connectWebSocket(url) {
     ws = new WebSocket(url);
-    ws.onopen = () => console.log("WebSocket connection established.");
+    
+    ws.onopen = () => {
+        console.log("WebSocket connection established.");
+    };
+    
     ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.type === 'new_message') {
-            handleNewMessage(message.payload);
+        try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'new_message') {
+                handleNewMessage(message.payload);
+            }
+        } catch (error) {
+            console.error("Error parsing WebSocket message:", error);
         }
     };
-    ws.onclose = () => console.log("WebSocket connection closed.");
-    ws.onerror = (error) => console.error("WebSocket error:", error);
+    
+    ws.onclose = (event) => {
+        console.log("WebSocket connection closed.", event.code, event.reason);
+        if (event.code === 1006 || event.code === 1011) {
+            console.log("WebSocket closed due to authentication issues");
+            // Trigger session validation
+            window.location.reload();
+        }
+    };
+    
+    ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        // Check if it's an authentication error
+        if (ws.readyState === WebSocket.CLOSED) {
+            console.log("WebSocket failed to connect, possibly due to authentication");
+        }
+    };
 }
 
 function handleNewMessage(payload) {
