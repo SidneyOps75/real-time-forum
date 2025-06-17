@@ -533,6 +533,7 @@ a { text-decoration: none; color: inherit; }
 
 .message-bubble {
   max-width: 75%;
+  min-width: 120px; /* Add minimum width to prevent squeezing */
   padding: 0.6rem 1rem;
   border-radius: 18px;
   word-wrap: break-word;
@@ -545,14 +546,16 @@ a { text-decoration: none; color: inherit; }
   background-color: var(--primary-light);
   color: #002b4d;
   align-self: flex-end;
-  border-bottom-right-radius: 4px; /* "Tail" effect */
+  border-bottom-right-radius: 4px;
+  margin-left: auto; /* Push to right with proper spacing */
 }
 
 .message-bubble.received {
   background-color: #eef1f4;
   color: var(--text-color);
   align-self: flex-start;
-  border-bottom-left-radius: 4px; /* "Tail" effect */
+  border-bottom-left-radius: 4px;
+  margin-right: auto; /* Push to left with proper spacing */
 }
 
 .message-header {
@@ -570,10 +573,13 @@ a { text-decoration: none; color: inherit; }
 }
 
 .message-timestamp {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   text-align: right;
   margin-top: 4px;
+  white-space: nowrap; /* Prevent line breaks */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis if needed */
 }
 
 /* Loading indicators */
