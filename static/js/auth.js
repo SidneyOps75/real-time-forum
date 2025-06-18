@@ -38,12 +38,24 @@ export function getUserId() {
 }
 
 export async function handleLogin() {
-    const identifier = document.getElementById('identifier').value;
-    const password = document.getElementById('password').value;
-    const submitBtn = document.querySelector('#login-form button[type="submit"]');
+    const form = document.getElementById('login-form');
+    if (!form) {
+        console.error('Login form not found!');
+        throw new Error('Login form not found');
+    }
+
+    const identifier = form.querySelector('#identifier').value;
+    const password = form.querySelector('#password').value;
+    const submitBtn = form.querySelector('button[type="submit"]');
 
     if (!identifier || !password) {
-        alert("Please enter both username/email and password.");
+        const errorElement = document.getElementById('identifier-error') || 
+                           document.getElementById('password-error');
+        if (errorElement) {
+            errorElement.textContent = "Please enter both username/email and password.";
+        } else {
+            alert("Please enter both username/email and password.");
+        }
         return;
     }
 
@@ -69,7 +81,8 @@ export async function handleLogin() {
         return data.user;
     } catch (error) {
         console.error('Login error:', error);
-        const errorElement = document.getElementById('password-error');
+        const errorElement = document.getElementById('password-error') || 
+                           document.getElementById('identifier-error');
         if (errorElement) {
             errorElement.textContent = error.message;
         } else {
@@ -81,7 +94,6 @@ export async function handleLogin() {
         submitBtn.disabled = false;
     }
 }
-
 export function handleLogout() {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('auth_token');
@@ -89,33 +101,34 @@ export function handleLogout() {
 }
 
 export async function handleRegister() {
-    const submitBtn = document.querySelector('#register-form button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.textContent : 'Create Account';
+    const form = document.getElementById('register-form');
+    if (!form) {
+        console.error('Register form not found!');
+        throw new Error('Registration form not found');
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn?.textContent || 'Create Account';
     
     try {
-        const form = document.getElementById('register-form');
-        if (!form) {
-            console.error('Register form not found!');
-            throw new Error('Registration form not found');
-        }
-
         // Update button state
         if (submitBtn) {
             submitBtn.textContent = 'Creating Account...';
             submitBtn.disabled = true;
         }
 
-        const formData = new FormData(form);
+        // Clear previous errors
         document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-        
+
+        // Validate required fields
         const requiredFields = ['username', 'email', 'password', 'confirmpassword', 'firstname', 'lastname', 'age', 'gender'];
         let hasErrors = false;
 
         for (const field of requiredFields) {
-            const value = formData.get(field);
-            if (!value) {
-                const errorElement = document.getElementById(`${field}-error`) || 
-                                    document.getElementById(`${field === 'password' ? 'reg-password' : field}-error`);
+            const input = form.querySelector(`[name="${field}"]`);
+            if (!input?.value) {
+                const errorElement = form.querySelector(`#${field}-error`) || 
+                                    form.querySelector(`#reg-${field}-error`);
                 if (errorElement) {
                     errorElement.textContent = 'This field is required';
                     hasErrors = true;
@@ -123,10 +136,11 @@ export async function handleRegister() {
             }
         }
 
-        const password = formData.get('password');
-        const confirmPassword = formData.get('confirmpassword');
-        if (password !== confirmPassword) {
-            const errorElement = document.getElementById('confirmpassword-error');
+        // Validate password match
+        const password = form.querySelector('[name="password"]')?.value;
+        const confirmPassword = form.querySelector('[name="confirmpassword"]')?.value;
+        if (password && confirmPassword && password !== confirmPassword) {
+            const errorElement = form.querySelector('#confirmpassword-error');
             if (errorElement) {
                 errorElement.textContent = 'Passwords do not match';
                 hasErrors = true;
@@ -137,27 +151,50 @@ export async function handleRegister() {
             throw new Error('Please fix the form errors');
         }
 
+        // Prepare form data
+        const formData = new FormData(form);
+        
+        // For debugging - log what's being sent
+        console.log('Registration data:', Object.fromEntries(formData.entries()));
+
         const response = await fetch('/register', {
             method: 'POST',
             body: formData
         });
 
-        const data = await response.json();
+        // Log raw response for debugging
+        console.log('Registration response status:', response.status);
+        const responseData = await response.json();
+        console.log('Registration response data:', responseData);
 
         if (!response.ok) {
-            if (data.errors) {
-                for (const [field, message] of Object.entries(data.errors)) {
-                    const errorElement = document.getElementById(`${field}-error`);
-                    if (errorElement) errorElement.textContent = message;
+            // Handle server-side validation errors
+            if (responseData.errors) {
+                for (const [field, message] of Object.entries(responseData.errors)) {
+                    const errorElement = form.querySelector(`#${field}-error`);
+                    if (errorElement) {
+                        errorElement.textContent = message;
+                    } else {
+                        console.warn(`No error element found for field: ${field}`);
+                    }
                 }
             }
-            throw new Error(data.error || 'Registration failed');
+            throw new Error(responseData.message || responseData.error || 'Registration failed');
         }
 
-        console.log('Registration successful:', data);
-        return data;
+        console.log('Registration successful:', responseData);
+        return responseData;
     } catch (error) {
         console.error('Registration error:', error);
+        
+        // Show a general error message if no specific field errors were shown
+        const generalErrorElement = form.querySelector('.general-error-message');
+        if (generalErrorElement) {
+            generalErrorElement.textContent = error.message;
+        } else {
+            alert(error.message);
+        }
+        
         throw error;
     } finally {
         // Reset button state
