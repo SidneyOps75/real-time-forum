@@ -286,3 +286,73 @@ func CommentReactionHandler(w http.ResponseWriter, r *http.Request) {
  
     json.NewEncoder(w).Encode(response)
 }
+// In handlers/comment_handler.go, add this new function
+
+func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+
+    // Get Post ID from query parameter
+    postIDStr := r.URL.Query().Get("post_id")
+    if postIDStr == "" {
+        http.Error(w, `{"error": "post_id is required"}`, http.StatusBadRequest)
+        return
+    }
+    postID, err := strconv.Atoi(postIDStr)
+    if err != nil {
+        http.Error(w, `{"error": "Invalid post_id"}`, http.StatusBadRequest)
+        return
+    }
+
+    userID, _ := db.GetCurrentUserIDFromSession(r)
+
+   
+    query := `
+        SELECT 
+            c.comment_id, 
+            c.post_id, 
+            c.user_id, 
+            c.content, 
+            c.created_at,
+            u.username as author,
+            COALESCE(u.first_name, '') as first_name,
+            COALESCE(u.last_name, '') as last_name,
+            (SELECT COUNT(*) FROM comment_reactions WHERE comment_id = c.comment_id AND reaction_type = 'like') as likes,
+            (SELECT COUNT(*) FROM comment_reactions WHERE comment_id = c.comment_id AND reaction_type = 'dislike') as dislikes,
+            COALESCE((SELECT reaction_type FROM comment_reactions WHERE comment_id = c.comment_id AND user_id = ?), '') as user_reaction
+        FROM comments c
+        JOIN users u ON c.user_id = u.user_id
+        WHERE c.post_id = ?
+        ORDER BY c.created_at ASC
+    `
+
+    rows, err := db.DB.Query(query, userID, postID)
+    if err != nil {
+        log.Printf("Database error fetching comments: %v", err)
+        http.Error(w, `{"error": "Failed to fetch comments"}`, http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var comments []Comment
+    for rows.Next() {
+        var comment Comment
+        err := rows.Scan(
+            &comment.CommentID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt,
+            &comment.Author, &comment.FirstName, &comment.LastName,
+            &comment.Likes, &comment.Dislikes, &comment.UserReaction,
+        )
+        if err != nil {
+            log.Printf("Error scanning comment row: %v", err)
+            continue
+        }
+        comments = append(comments, comment)
+    }
+
+    if err := rows.Err(); err != nil {
+        log.Printf("Error after iterating comment rows: %v", err)
+        http.Error(w, `{"error": "Error processing comments"}`, http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(comments)
+}

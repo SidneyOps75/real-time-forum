@@ -38,7 +38,7 @@ func ServeWs(hub *rt_hub.Hub, w http.ResponseWriter, r *http.Request) {
     var expiresAt time.Time
     err = db.DB.QueryRow("SELECT user_id, expires_at FROM sessions WHERE session_id = ?", sessionID).Scan(&userID, &expiresAt)
     if err != nil || expiresAt.Before(time.Now()) {
-        log.Printf("WebSocket connection failed: Invalid session (%v)", err)
+        
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }

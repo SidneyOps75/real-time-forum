@@ -16,8 +16,6 @@ import (
 
 var DB *sql.DB
 
-
-
 func Init(dbPath string) error {
 	var err error
 	DB, err = sql.Open("sqlite3", dbPath)
@@ -133,7 +131,6 @@ func GetCurrentUserIDFromSession(r *http.Request) (int, error) {
         log.Printf("Error retrieving session_token cookie: %v", err)
         return 0, err
     }
-   
 
     sessionID := cookie.Value
 
@@ -150,10 +147,8 @@ func GetCurrentUserIDFromSession(r *http.Request) (int, error) {
         return 0, fmt.Errorf("session expired")
     }
 
-  
     return userID, nil
 }
-
 
 // UpdateUserStatus updates the is_online status in the database.
 func UpdateUserStatus(userID int, isOnline bool) {
@@ -190,76 +185,79 @@ func SaveMessage(msg models.PrivateMessage) (models.PrivateMessage, error) {
 }
 
 // GetUsersForChat gets all users and their chat info, excluding the current user.
-// This is an advanced query to get last message and unread count.
+
 func GetUsersForChat(currentUserID int) ([]models.UserChatInfo, error) {
-	query := `
-SELECT 
-    u.user_id, 
-    u.username, 
-    COALESCE(us.is_online, 0) as is_online,
-    COALESCE(last_msg.content, 'No messages yet') as last_message,
-    COALESCE(datetime(last_msg.created_at), datetime(u.created_at)) as last_message_time,
-    COALESCE(unread.count, 0) as unread_count
-FROM users u
-LEFT JOIN user_status us ON u.user_id = us.user_id
-LEFT JOIN (
-    SELECT content, created_at, 
-        CASE
-            WHEN sender_id = ? THEN receiver_id
-            ELSE sender_id
-        END as other_user_id
-    FROM private_messages
-    WHERE (sender_id = ? OR receiver_id = ?)
-    ORDER BY created_at DESC
-) AS last_msg ON u.user_id = last_msg.other_user_id
-LEFT JOIN (
-    SELECT sender_id, COUNT(*) as count
-    FROM private_messages
-    WHERE receiver_id = ? AND read = 0
-    GROUP BY sender_id
-) AS unread ON u.user_id = unread.sender_id
-WHERE u.user_id != ?
-GROUP BY u.user_id
-ORDER BY last_message_time DESC;
-`
+	// First, get all users with their basic info
+	users := []models.UserChatInfo{}
 	
-    
-    rows, err := DB.Query(query, currentUserID, currentUserID, currentUserID, currentUserID, currentUserID)
-    if err != nil {
-        return nil, fmt.Errorf("query failed: %w", err)
-    }
-    defer rows.Close()
-	
+	// Get all users except current user
+	userRows, err := DB.Query(`
+		SELECT u.user_id, u.username, COALESCE(us.is_online, 0) as is_online
+		FROM users u
+		LEFT JOIN user_status us ON u.user_id = us.user_id
+		WHERE u.user_id != ?
+		ORDER BY u.username
+	`, currentUserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users: %w", err)
+	}
+	defer userRows.Close()
 
-    var users []models.UserChatInfo
-    for rows.Next() {
-        var user models.UserChatInfo
-        var rawLastMessageTime string
-if err := rows.Scan(&user.UserID, &user.Username, &user.IsOnline, &user.LastMessage, &rawLastMessageTime, &user.UnreadCount); err != nil {
-    return nil, fmt.Errorf("scan failed: %w", err)
-}
-if rawLastMessageTime == "" {
-    user.LastMessageTime = time.Time{} // Set to zero time
-} else {
-    parsedTime, err := time.Parse("2006-01-02 15:04:05", rawLastMessageTime)
-    if err != nil {
-        log.Printf("Error parsing last_message_time: %v", err)
-        user.LastMessageTime = time.Time{} // Fallback to zero time
-    } else {
-        user.LastMessageTime = parsedTime
-    }
-}
-
-// Parse the string into a time.Time value
-parsedTime, err := time.Parse("2006-01-02 15:04:05", rawLastMessageTime)
-if err != nil {
-    return nil, fmt.Errorf("failed to parse last_message_time: %v", err)
-}
-user.LastMessageTime = parsedTime
-        users = append(users, user)
-    }
-    return users, nil
+	for userRows.Next() {
+		var user models.UserChatInfo
+		if err := userRows.Scan(&user.UserID, &user.Username, &user.IsOnline); err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+		
+		// Get the latest message between current user and this user
+		var lastMessage string
+		var lastMessageTime time.Time
+		err = DB.QueryRow(`
+			SELECT content, created_at
+			FROM private_messages
+			WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+			ORDER BY created_at DESC
+			LIMIT 1
+		`, currentUserID, user.UserID, user.UserID, currentUserID).Scan(&lastMessage, &lastMessageTime)
+		
+		if err != nil && err != sql.ErrNoRows {
+			return nil, fmt.Errorf("failed to get last message: %w", err)
+		}
+		
+		if err == sql.ErrNoRows {
+			user.LastMessage = "No messages yet"
+			user.LastMessageTime = time.Time{}
+		} else {
+			user.LastMessage = lastMessage
+			user.LastMessageTime = lastMessageTime
+		}
+		
+		// Get unread count
+		var unreadCount int
+		err = DB.QueryRow(`
+			SELECT COUNT(*)
+			FROM private_messages
+			WHERE sender_id = ? AND receiver_id = ? AND read = 0
+		`, user.UserID, currentUserID).Scan(&unreadCount)
+		
+		if err != nil {
+			return nil, fmt.Errorf("failed to get unread count: %w", err)
+		}
+		
+		user.UnreadCount = unreadCount
+		users = append(users, user)
+	}
 	
+	// Sort by last message time (most recent first)
+	for i := 0; i < len(users)-1; i++ {
+		for j := i + 1; j < len(users); j++ {
+			if users[i].LastMessageTime.Before(users[j].LastMessageTime) {
+				users[i], users[j] = users[j], users[i]
+			}
+		}
+	}
+	
+	return users, nil
 }
 
 // GetPrivateMessages retrieves a paginated list of messages between two users.

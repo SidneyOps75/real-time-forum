@@ -1,12 +1,12 @@
 
 :root {
-  /* LinkedIn Color Palette */
+ 
   --primary-color: #0a66c2;
   --primary-dark: #004182;
-  --primary-light: #e0f2fe; /* A lighter blue for backgrounds */
+  --primary-light: #e0f2fe; 
   --text-color: rgba(0, 0, 0, 0.9);
   --text-secondary: rgba(0, 0, 0, 0.6);
-  --background-color: #f4f2ee; /* LinkedIn's signature off-white background */
+  --background-color: #f4f2ee; 
   --card-background: #ffffff;
   --border-color: #e0e0e0;
   --success-color: #00734a;
@@ -59,11 +59,122 @@ a { text-decoration: none; color: inherit; }
   padding: 1.5rem 1rem;
 }
 
-.content-area, .sidebar, .post-card, .auth-card {
+/* ==========================================================================
+   ENHANCED POST CARD STYLES
+   ========================================================================== */
+
+/* Main post card container */
+.post-card {
+  padding: 1.25rem;
+  border: 1px solid var(--border-color);
   background: var(--card-background);
   border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Header section with avatar and author info */
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.post-author-details {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.post-author-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.post-author-info {
+  display: flex;
+  flex-direction: column;
+}
+.post-author-name {
+  font-weight: 600;
+  color: var(--text-color);
+}
+.post-timestamp {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Post body containing title and content */
+.post-body .post-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+.post-body .post-text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Styles for category tags */
+.post-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.post-category-tag {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Style for the post image */
+.post-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
-  padding: 1.25rem;
+}
+
+/* Footer with a dividing line and action buttons */
+.post-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+}
+.post-actions {
+  display: flex;
+  justify-content: space-around; /* Evenly space the buttons */
+  align-items: center;
+}
+.post-actions .action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.post-actions .action-btn:hover {
+  background-color: #f0f2f5;
+}
+.post-actions .action-btn.active {
+  color: var(--primary-color);
 }
 
 .sidebar {
@@ -291,6 +402,9 @@ a { text-decoration: none; color: inherit; }
   color: var(--text-color);
   font-size: 1rem;
 }
+.main-content {
+  padding-bottom: 200px; /* Creates space at the bottom of the page */
+}
 
 .user-email {
   color: var(--text-secondary);
@@ -374,17 +488,13 @@ a { text-decoration: none; color: inherit; }
 }
 
 
-/* ==========================================================================
-   CHAT SYSTEM STYLES 
-   ========================================================================== */
-
 #chat-system-container {
   display: flex;
   flex-direction: row;
   position: fixed;
-  bottom: 0;
+  bottom: 20px; /* Added space from bottom */
   right: 24px;
-  width: 750px; /* Wider for a better experience */
+  width: 750px;
   height: 550px;
   background: var(--card-background);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
@@ -393,6 +503,7 @@ a { text-decoration: none; color: inherit; }
   overflow: hidden;
   border: 1px solid var(--border-color);
   border-bottom: none;
+  margin-bottom: 20px; /* Additional margin for better spacing */
 }
 
 /* ----- User List Panel (Left Side) ----- */
@@ -433,10 +544,31 @@ a { text-decoration: none; color: inherit; }
 .user-list-item.active {
   background-color: var(--primary-light);
 }
+.user-list-item.has-new-message {
+    background-color: #e3f2fd;
+    border-left: 3px solid var(--primary-color);
+}
+
 .user-list-item.has-new-message .user-name,
 .user-list-item.has-new-message .last-message-preview {
     font-weight: 600;
     color: var(--text-color);
+}
+
+.user-list-item.has-new-message::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+}
+
+.user-list-item {
+    position: relative;
 }
 
 /* User Avatar & Status */
@@ -456,7 +588,7 @@ a { text-decoration: none; color: inherit; }
   font-weight: 600;
   font-size: 1.2rem;
 }
-.user-avatar-status::after { /* Status dot */
+.user-avatar-status::after { 
   content: '';
   position: absolute;
   bottom: 2px;
@@ -471,12 +603,41 @@ a { text-decoration: none; color: inherit; }
 
 /* User Info in List */
 .user-info {
-  overflow: hidden; /* Prevent text from overflowing */
+  overflow: hidden; 
+  flex: 1;
 }
+
+.user-name-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .user-name {
   font-weight: 600;
   color: var(--text-color);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.unread-count {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .last-message-preview {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -510,7 +671,7 @@ a { text-decoration: none; color: inherit; }
   display: none; /* Hidden by default */
   flex-direction: column;
   height: 100%;
-  background-color: #f7f9fb; /* Slightly different bg for chat area */
+  background-color: #f7f9fb; 
 }
 #active-chat-area.active { display: flex; }
 
@@ -533,6 +694,7 @@ a { text-decoration: none; color: inherit; }
 
 .message-bubble {
   max-width: 75%;
+  min-width: 120px; 
   padding: 0.6rem 1rem;
   border-radius: 18px;
   word-wrap: break-word;
@@ -545,14 +707,16 @@ a { text-decoration: none; color: inherit; }
   background-color: var(--primary-light);
   color: #002b4d;
   align-self: flex-end;
-  border-bottom-right-radius: 4px; /* "Tail" effect */
+  border-bottom-right-radius: 4px;
+  margin-left: auto; 
 }
 
 .message-bubble.received {
   background-color: #eef1f4;
   color: var(--text-color);
   align-self: flex-start;
-  border-bottom-left-radius: 4px; /* "Tail" effect */
+  border-bottom-left-radius: 4px;
+  margin-right: auto;
 }
 
 .message-header {
@@ -570,10 +734,13 @@ a { text-decoration: none; color: inherit; }
 }
 
 .message-timestamp {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   text-align: right;
   margin-top: 4px;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis; 
 }
 
 /* Loading indicators */
@@ -656,7 +823,11 @@ a { text-decoration: none; color: inherit; }
   }
 
   .container {
-      grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 225px 1fr 300px;
+    gap: 1.5rem;
+    padding: 1.5rem 1rem;
+    margin-bottom: 100px; /* Extra space at the bottom */
   }
 
   .sidebar {
@@ -685,4 +856,327 @@ a { text-decoration: none; color: inherit; }
     left: 1rem;
   }
 }
+/* Create Post Page Styling */
+#create-post-page {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
 
+.content-area {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.content-area:hover {
+  transform: translateY(-2px);
+}
+
+.create-post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  color: white;
+}
+
+.create-post-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-3px);
+}
+
+#create-post-form {
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.8rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-weight: 500;
+  color: #333;
+  font-size: 1rem;
+}
+
+.form-input, .form-textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.form-input:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #a777e3;
+  box-shadow: 0 0 0 3px rgba(167, 119, 227, 0.2);
+  background-color: #fff;
+}
+
+.form-textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+/* Categories Styling */
+.categories-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.category-checkbox {
+  display: none;
+}
+
+.category-label {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  background: #f0f0f0;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.category-checkbox:checked + .category-label {
+  background: #6e8efb;
+  color: white;
+}
+
+/* File Upload Styling */
+.file-upload-input {
+  display: none;
+}
+
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.file-upload-label i {
+  font-size: 2rem;
+  color: #a777e3;
+  margin-bottom: 1rem;
+}
+
+.file-upload-label span {
+  color: #666;
+}
+
+.file-upload-label:hover {
+  border-color: #a777e3;
+  background-color: #f5f0ff;
+}
+
+/* Preview Image */
+.image-preview {
+  margin-top: 1rem;
+  display: none;
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+/* Submit Button */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(110, 142, 251, 0.3);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(110, 142, 251, 0.4);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .create-post-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.5rem;
+  }
+  
+  #create-post-form {
+      padding: 1.5rem;
+  }
+}
+
+.comment-section-wrapper {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+/* The scrollable container for the list of comments */
+.comment-list {
+  max-height: 450px; /* Crucial for controlling height */
+  overflow-y: auto;  /* Adds a scrollbar only when needed */
+  padding-right: 10px; /* Space for the scrollbar */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Space between comment cards */
+  margin-bottom: 1rem;
+}
+
+/* Individual comment "card" */
+.comment-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #f7f9fb;
+  border-radius: var(--border-radius);
+  border: 1px solid #eef1f4;
+}
+
+/* Avatar for the user who commented */
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.comment-body {
+  flex-grow: 1;
+}
+
+.comment-author {
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-color);
+}
+
+.comment-content {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  word-wrap: break-word;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.comment-actions .action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.comment-actions .action-btn:hover {
+  color: var(--text-color);
+  background-color: #eef1f4;
+}
+.comment-actions .action-btn.active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Styling for the comment input form */
+.comment-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+.comment-input {
+    flex-grow: 1;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background-color: white;
+}
+.comment-submit-btn {
+    border-radius: 16px;
+    padding: 0.5rem 1rem;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+  #chat-system-container {
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 60vh;
+    margin-bottom: 0;
+  }
+  
+  .container {
+    margin-bottom: 0;
+    padding-bottom: 2rem;
+  }
+  
+  .main-content {
+    padding-bottom: 0;
+  }
+}

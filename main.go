@@ -37,6 +37,7 @@ func main() {
 	http.HandleFunc("/register", handlers.RegisterHandler)
 	http.HandleFunc("/like", handlers.LikeHandler)
 	http.HandleFunc("/comment/create", handlers.CreateCommentHandler)
+	http.HandleFunc("/comments", handlers.GetCommentsHandler)
 	http.HandleFunc("/comment/like", handlers.CommentReactionHandler)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ServeWs(hub, w, r)
@@ -54,6 +55,6 @@ func main() {
 		}
 	})
 
-	log.Println("Server started at http://localhost:9008")
-	log.Fatal(http.ListenAndServe(":9008", nil))
+	log.Println("Server started at http://localhost:5000")
+	log.Fatal(http.ListenAndServe(":5000", nil))
 }
