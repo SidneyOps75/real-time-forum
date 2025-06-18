@@ -1,10 +1,9 @@
 import { isLoggedIn, getUserId, handleLogin, handleLogout, handleRegister, validateSession } from './auth.js';
-import { assignChatDomElements, setupChatEventListeners, initializeChat } from './chat.js';
+import { assignChatDomElements, setupChatEventListeners, initializeChat, fetchAndRenderOnlineUsers } from './chat.js';
 import { handleCreatePost, loadPosts, displayPosts, loadCategories } from './post.js';
 import { handleReaction, updatePostReactionsUI } from './like.js';
 import { showComments, handleCreateComment, handleCommentReaction } from './comment.js';
 import { escapeHtml } from './helpers.js';
-import { showChatInterface } from './helpers.js';
 import { formatDate } from './helpers.js';
 import { scrollToBottom } from './helpers.js';
 
@@ -14,13 +13,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     assignChatDomElements();
     setupNavigation();
     setupForms();
-    setupChatEventListeners(); 
-    showPage('home'); 
+    setupChatEventListeners();
+    showPage('home');
     loadCategories();
-    
+
     // Validate session on page load
     await initializeAuth();
-    
+
     // Set up periodic session validation (every 5 minutes)
     setInterval(async () => {
         if (isLoggedIn()) {
@@ -44,7 +43,6 @@ async function initializeAuth() {
             const userId = getUserId();
             if (userId) {
                 console.log("User session validated. Initializing chat.");
-                showChatInterface();
                 initializeChat(userId);
             }
         } else {
@@ -58,7 +56,7 @@ async function initializeAuth() {
 // Core application functions
 export function showPage(pageId) {
     console.log(`Showing page: ${pageId}`);
-    
+
     // Hide all page sections
     document.querySelectorAll('.page-section').forEach(section => {
         section.classList.remove('active-section');
@@ -69,7 +67,7 @@ export function showPage(pageId) {
     if (page) {
         page.classList.add('active-section');
         console.log(`Page ${pageId} is now active`);
-        
+
         // Load posts only for home page
         if (pageId === 'home') {
             loadPosts();
@@ -81,7 +79,7 @@ export function showPage(pageId) {
     // Show/hide sidebar based on page
     const filtersSidebar = document.getElementById('filters-sidebar');
     const activitySidebar = document.getElementById('activity-sidebar');
-    
+
     if (filtersSidebar) {
         filtersSidebar.style.display = pageId === 'home' ? 'block' : 'none';
     }
@@ -98,11 +96,11 @@ export function updateAuthUI() {
     // Update header navigation buttons
     const loggedOutElements = document.querySelectorAll('.logged-out');
     const loggedInElements = document.querySelectorAll('.logged-in');
-    
+
     loggedOutElements.forEach(el => {
         el.style.display = isAuthenticated ? 'none' : 'flex';
     });
-    
+
     loggedInElements.forEach(el => {
         el.style.display = isAuthenticated ? 'flex' : 'none';
     });
@@ -113,10 +111,17 @@ export function updateAuthUI() {
         createPostBtn.style.display = isAuthenticated ? 'inline-flex' : 'none';
     }
 
-    // Update chat system
+    // Update message toggle button visibility
+    const messageToggleBtn = document.getElementById('message-toggle-btn');
+    if (messageToggleBtn) {
+        messageToggleBtn.style.display = isAuthenticated ? 'block' : 'none';
+    }
+
+    // Hide chat system when not authenticated
     const chatContainer = document.getElementById('chat-system-container');
-    if (chatContainer) {
-        chatContainer.style.display = isAuthenticated ? 'flex' : 'none';
+    if (chatContainer && !isAuthenticated) {
+        chatContainer.style.display = 'none';
+        chatContainer.classList.remove('visible');
     }
 
     // Show/hide sidebar sections based on auth state
@@ -124,46 +129,48 @@ export function updateAuthUI() {
     if (onlineUsersSection) {
         onlineUsersSection.style.display = isAuthenticated ? 'block' : 'none';
     }
-    
+
     // Update user profile information
     if (isAuthenticated) {
         updateUserProfile();
+        // Initialize online users when authenticated
+        fetchAndRenderOnlineUsers();
     }
 }
 
 function updateUserProfile() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
+
     if (user.username) {
         // Update navigation profile
         const userNameNav = document.getElementById('user-name-nav');
         const userAvatarInitial = document.getElementById('user-avatar-initial');
-        
+
         if (userNameNav) {
             userNameNav.textContent = user.username;
         }
-        
+
         if (userAvatarInitial) {
             userAvatarInitial.textContent = user.username.charAt(0).toUpperCase();
         }
-        
+
         // Update dropdown profile
         const userFullName = document.getElementById('user-full-name');
         const userEmail = document.getElementById('user-email');
         const userAvatarLargeInitial = document.getElementById('user-avatar-large-initial');
-        
+
         if (userFullName) {
             // If we have first/last name from registration, use it, otherwise use username
-            const fullName = user.firstname && user.lastname 
-                ? `${user.firstname} ${user.lastname}` 
+            const fullName = user.firstname && user.lastname
+                ? `${user.firstname} ${user.lastname}`
                 : user.username;
             userFullName.textContent = fullName;
         }
-        
+
         if (userEmail) {
             userEmail.textContent = user.email || 'No email provided';
         }
-        
+
         if (userAvatarLargeInitial) {
             userAvatarLargeInitial.textContent = user.username.charAt(0).toUpperCase();
         }
@@ -181,7 +188,7 @@ export function setupNavigation() {
     document.getElementById('create-post-btn')?.addEventListener('click', () => showPage('create-post'));
     document.getElementById('home-login-btn')?.addEventListener('click', () => showPage('login'));
     document.getElementById('home-register-btn')?.addEventListener('click', () => showPage('register'));
-    
+
     // Setup user profile dropdown
     setupUserProfileDropdown();
 }
@@ -189,34 +196,34 @@ export function setupNavigation() {
 function setupUserProfileDropdown() {
     const profileBtn = document.getElementById('user-profile-btn');
     const dropdownMenu = document.getElementById('user-dropdown-menu');
-    
+
     if (profileBtn && dropdownMenu) {
         // Toggle dropdown on profile button click
         profileBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             const isOpen = dropdownMenu.classList.contains('show');
-            
+
             if (isOpen) {
                 closeUserDropdown();
             } else {
                 openUserDropdown();
             }
         });
-        
+
         // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
                 closeUserDropdown();
             }
         });
-        
+
         // Handle dropdown menu items
         document.getElementById('view-profile-btn')?.addEventListener('click', () => {
             console.log('View Profile clicked');
             closeUserDropdown();
             // TODO: Implement profile page
         });
-        
+
         document.getElementById('settings-btn')?.addEventListener('click', () => {
             console.log('Settings clicked');
             closeUserDropdown();
@@ -228,7 +235,7 @@ function setupUserProfileDropdown() {
 function openUserDropdown() {
     const profileBtn = document.getElementById('user-profile-btn');
     const dropdownMenu = document.getElementById('user-dropdown-menu');
-    
+
     if (profileBtn && dropdownMenu) {
         profileBtn.classList.add('active');
         dropdownMenu.classList.add('show');
@@ -238,7 +245,7 @@ function openUserDropdown() {
 function closeUserDropdown() {
     const profileBtn = document.getElementById('user-profile-btn');
     const dropdownMenu = document.getElementById('user-dropdown-menu');
-    
+
     if (profileBtn && dropdownMenu) {
         profileBtn.classList.remove('active');
         dropdownMenu.classList.remove('show');
@@ -270,10 +277,10 @@ export function setupForms() {
             try {
                 const result = await handleRegister();
                 console.log('Registration successful:', result);
-                
+
                 // After successful registration, show login page
                 showPage('login');
-                
+
                 // Show success message on login page
                 setTimeout(() => {
                     const loginSection = document.getElementById('login-page');
@@ -283,23 +290,23 @@ export function setupForms() {
                         if (existingMsg) {
                             existingMsg.remove();
                         }
-                        
+
                         // Create and add new success message
                         const successMsg = document.createElement('div');
                         successMsg.className = 'success-message';
                         successMsg.textContent = 'Registration successful! Please log in with your credentials.';
-                        
+
                         // Insert at the top of the login section
                         const authCard = loginSection.querySelector('.auth-card');
                         if (authCard) {
                             authCard.insertBefore(successMsg, authCard.firstChild);
                         }
-                        
+
                         // Remove message after 7 seconds
                         setTimeout(() => successMsg.remove(), 7000);
                     }
                 }, 100); // Small delay to ensure page transition completes
-                
+
             } catch (error) {
                 console.error('Registration failed:', error);
                 // Show error message on registration form
@@ -309,17 +316,17 @@ export function setupForms() {
                     if (existingError) {
                         existingError.remove();
                     }
-                    
+
                     const errorMsg = document.createElement('div');
                     errorMsg.className = 'error-message-general';
                     errorMsg.style.cssText = 'background-color: var(--error-color); color: white; padding: 0.75rem 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; font-weight: 500;';
                     errorMsg.textContent = error.message || 'Registration failed. Please try again.';
-                    
+
                     const authCard = registerSection.querySelector('.auth-card');
                     if (authCard) {
                         authCard.insertBefore(errorMsg, authCard.firstChild);
                     }
-                    
+
                     setTimeout(() => errorMsg.remove(), 5000);
                 }
             }

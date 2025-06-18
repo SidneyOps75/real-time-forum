@@ -1,15 +1,60 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
+
 	"real/db"
 	"real/handlers"
+
 	rt_hub "real/websocket"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
+// initializeDatabaseFromSchema creates the database from schema if it doesn't exist
+func initializeDatabaseFromSchema() error {
+	// Check if schema file exists
+	schemaPath := "db/schema.sql"
+	if _, err := os.Stat(schemaPath); os.IsNotExist(err) {
+		return fmt.Errorf("schema file not found: %s", schemaPath)
+	}
+
+	// Read schema file
+	schemaBytes, err := os.ReadFile(schemaPath)
+	if err != nil {
+		return fmt.Errorf("error reading schema file: %v", err)
+	}
+
+	// Create database
+	database, err := sql.Open("sqlite3", "./forum.db")
+	if err != nil {
+		return fmt.Errorf("error creating database: %v", err)
+	}
+	defer database.Close()
+
+	// Execute schema
+	if _, err := database.Exec(string(schemaBytes)); err != nil {
+		return fmt.Errorf("error executing schema: %v", err)
+	}
+
+	return nil
+}
+
 func main() {
+	// Check if database exists, if not, initialize it
+	if _, err := os.Stat("forum.db"); os.IsNotExist(err) {
+		fmt.Println("🔧 Database not found. Initializing...")
+		if err := initializeDatabaseFromSchema(); err != nil {
+			log.Fatalf("❌ Failed to initialize database: %v", err)
+		}
+		fmt.Println("✅ Database initialized successfully!")
+	}
+
 	if err := db.Init("./forum.db"); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
@@ -44,6 +89,7 @@ func main() {
 	})
 	http.HandleFunc("/api/users", handlers.HandleGetUsers)
 	http.HandleFunc("/api/messages", handlers.HandleGetMessages)
+	http.HandleFunc("/api/online-users", handlers.HandleGetOnlineUsers)
 	http.HandleFunc("/api/validate-session", handlers.ValidateSessionHandler)
 
 	// Serve index.html for all other routes

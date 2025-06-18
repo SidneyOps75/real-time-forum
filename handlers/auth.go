@@ -16,16 +16,22 @@ import (
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
-		
 		return
 	}
 	if r.Method != http.MethodPost {
-		
 		return
 	}
 
 	cookie, err := r.Cookie("session_id")
 	if err == nil && cookie.Value != "" {
+		// Get user ID before deleting session to update status
+		var userID int
+		err = db.DB.QueryRow("SELECT user_id FROM sessions WHERE session_id = ?", cookie.Value).Scan(&userID)
+		if err == nil {
+			// Update user status to offline
+			db.UpdateUserStatus(userID, false)
+		}
+
 		_, err = db.DB.Exec(`DELETE FROM sessions WHERE session_id = ?`, cookie.Value)
 		if err != nil {
 			log.Printf("Error deleting session: %v", err)
@@ -40,7 +46,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Set content type first
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8081")
-    w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -77,7 +83,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	var (
 		userID       int
 		username     string
@@ -86,8 +91,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	err := db.DB.QueryRow(`
-        SELECT user_id, username, email, password 
-        FROM users 
+        SELECT user_id, username, email, password
+        FROM users
         WHERE username = ? OR email = ?`,
 		loginData.Identifier, loginData.Identifier,
 	).Scan(&userID, &username, &email, &passwordHash)
@@ -117,7 +122,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-   	// Convert userID to string for session
+	// Convert userID to string for session
 
 	// Create new session
 	sessionID := uuid.New().String()
@@ -157,6 +162,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
+	// Update user status to online
+	db.UpdateUserStatus(userID, true)
+
 	// Successful login response
 	response := map[string]interface{}{
 		"success":       true,
@@ -179,7 +187,7 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"valid": false,
+			"valid":   false,
 			"message": "Method not allowed",
 		})
 		return
@@ -190,7 +198,7 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"valid": false,
+			"valid":   false,
 			"message": "No session found",
 		})
 		return
@@ -200,26 +208,25 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	var username, email string
 	var expiresAt time.Time
-	
+
 	err = db.DB.QueryRow(`
 		SELECT s.user_id, s.expires_at, u.username, u.email
 		FROM sessions s
 		JOIN users u ON s.user_id = u.user_id
 		WHERE s.session_id = ?
 	`, cookie.Value).Scan(&userID, &expiresAt, &username, &email)
-	
 	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"valid": false,
+				"valid":   false,
 				"message": "Invalid session",
 			})
 		} else {
 			log.Printf("Database error during session validation: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"valid": false,
+				"valid":   false,
 				"message": "Internal server error",
 			})
 		}
@@ -230,10 +237,10 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	if expiresAt.Before(time.Now()) {
 		// Delete expired session
 		db.DB.Exec(`DELETE FROM sessions WHERE session_id = ?`, cookie.Value)
-		
+
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"valid": false,
+			"valid":   false,
 			"message": "Session expired",
 		})
 		return
@@ -248,7 +255,6 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 			"email":    email,
 		},
 	}
-	
+
 	json.NewEncoder(w).Encode(response)
 }
-

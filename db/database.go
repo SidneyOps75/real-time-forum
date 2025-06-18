@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http" 
+	"net/http"
 	"os"
 	"time"
 
@@ -22,7 +22,7 @@ func Init(dbPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
-	
+
 	if err = createTables(); err != nil {
 		return fmt.Errorf("failed to create tables: %v", err)
 	}
@@ -30,7 +30,7 @@ func Init(dbPath string) error {
 	if err = createCategories(); err != nil {
 		return fmt.Errorf("failed to create categories: %v", err)
 	}
-	
+
 	// Start session cleanup scheduler
 	go ScheduleSessionCleanup(1*time.Hour, CleanupExpiredSessions)
 
@@ -96,7 +96,7 @@ func ScheduleSessionCleanup(interval time.Duration, cleanupFunc func() error) {
 
 func GetUser(userID int) ([]string, error) {
 	var username, bio, profilePicture string
-	qry := `SELECT username, COALESCE(bio, ""), COALESCE(profile_picture, "") 
+	qry := `SELECT username, COALESCE(bio, ""), COALESCE(profile_picture, "")
             FROM users WHERE user_id = ?`
 	err := DB.QueryRow(qry, userID).Scan(&username, &bio, &profilePicture)
 	if err != nil {
@@ -132,15 +132,15 @@ func GetCurrentUserIDFromSession(r *http.Request) (int, error) {
         return 0, err
     }
 
-    sessionID := cookie.Value
+	sessionID := cookie.Value
 
-    var userID int
-    var expiresAt time.Time
-    err = DB.QueryRow("SELECT user_id, expires_at FROM sessions WHERE session_id = ?", sessionID).Scan(&userID, &expiresAt)
-    if err != nil {
-        log.Printf("Error querying session: %v", err)
-        return 0, err
-    }
+	var userID int
+	var expiresAt time.Time
+	err = DB.QueryRow("SELECT user_id, expires_at FROM sessions WHERE session_id = ?", sessionID).Scan(&userID, &expiresAt)
+	if err != nil {
+		log.Printf("Error querying session: %v", err)
+		return 0, err
+	}
 
     if expiresAt.Before(time.Now()) {
         log.Printf("Session expired: %v", expiresAt)
@@ -148,6 +148,12 @@ func GetCurrentUserIDFromSession(r *http.Request) (int, error) {
     }
 
     return userID, nil
+	if expiresAt.Before(time.Now()) {
+		log.Printf("Session expired: %v", expiresAt)
+		return 0, fmt.Errorf("session expired")
+	}
+
+	return userID, nil
 }
 
 // UpdateUserStatus updates the is_online status in the database.
@@ -159,6 +165,50 @@ func UpdateUserStatus(userID int, isOnline bool) {
 	if err != nil {
 		log.Printf("Error updating status for user %d: %v", userID, err)
 	}
+}
+
+// GetOnlineUsers returns a list of currently online users excluding the current user
+func GetOnlineUsers(currentUserID int) ([]models.OnlineUser, error) {
+	query := `
+		SELECT u.user_id, u.username, us.last_seen
+		FROM users u
+		INNER JOIN user_status us ON u.user_id = us.user_id
+		WHERE us.is_online = 1 AND u.user_id != ?
+		ORDER BY u.username ASC
+	`
+
+	rows, err := DB.Query(query, currentUserID)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var onlineUsers []models.OnlineUser
+	for rows.Next() {
+		var user models.OnlineUser
+		var lastSeenStr string
+
+		if err := rows.Scan(&user.UserID, &user.Username, &lastSeenStr); err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+
+		// Parse last seen time
+		if lastSeen, err := time.Parse("2006-01-02 15:04:05", lastSeenStr); err == nil {
+			user.LastSeen = lastSeen
+		} else {
+			// Try RFC3339 format as fallback
+			if lastSeen, err := time.Parse(time.RFC3339, lastSeenStr); err == nil {
+				user.LastSeen = lastSeen
+			} else {
+				log.Printf("Error parsing last_seen time: %v", err)
+				user.LastSeen = time.Now() // Default to current time
+			}
+		}
+
+		onlineUsers = append(onlineUsers, user)
+	}
+
+	return onlineUsers, nil
 }
 
 // GetUsernameByID retrieves a single username from a user ID.
@@ -292,7 +342,7 @@ func GetPrivateMessages(userID1, userID2, limit, offset int) ([]models.PrivateMe
 
 // MarkMessagesAsRead updates the 'read' status for messages between two users.
 func MarkMessagesAsRead(senderID, receiverID int) error {
-    query := `UPDATE private_messages SET read = TRUE WHERE sender_id = ? AND receiver_id = ? AND read = FALSE`
-    _, err := DB.Exec(query, senderID, receiverID)
-    return err
+	query := `UPDATE private_messages SET read = TRUE WHERE sender_id = ? AND receiver_id = ? AND read = FALSE`
+	_, err := DB.Exec(query, senderID, receiverID)
+	return err
 }
