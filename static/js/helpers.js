@@ -3,12 +3,12 @@ export function formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
-    
+
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
+
     return date.toLocaleDateString();
 }
 
@@ -21,13 +21,24 @@ export function escapeHtml(text) {
 
 export function throttle(func, limit) {
     let inThrottle;
+    let lastFunc;
+    let lastRan;
+
     return function() {
-        const args = arguments;
         const context = this;
-        if (!inThrottle) {
+        const args = arguments;
+
+        if (!lastRan) {
             func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
+            lastRan = Date.now();
+        } else {
+            clearTimeout(lastFunc);
+            lastFunc = setTimeout(function() {
+                if ((Date.now() - lastRan) >= limit) {
+                    func.apply(context, args);
+                    lastRan = Date.now();
+                }
+            }, limit - (Date.now() - lastRan));
         }
     };
 }

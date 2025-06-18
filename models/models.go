@@ -1,24 +1,25 @@
 package models
 
-import( "time"
-   "database/sql"
+import (
+	"database/sql"
+	"time"
 )
 
 type Category struct {
-    CategoryID  int    `json:"category_id"`
-    Name        string `json:"name"`
-    Description string `json:"description"`
+	CategoryID  int    `json:"category_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type Post struct {
-    PostID    int       `json:"post_id"`
-    UserID    int       `json:"user_id"`
-    Title     string    `json:"title"`
-    Content   string    `json:"content"`
-    ImageURL  string    `json:"image_url"`
-    CreatedAt time.Time `json:"created_at"`
-    UpdatedAt time.Time `json:"updated_at"`
-    ImgURL      sql.NullString `json:"imgurl,omitempty"`
+	PostID    int            `json:"post_id"`
+	UserID    int            `json:"user_id"`
+	Title     string         `json:"title"`
+	Content   string         `json:"content"`
+	ImageURL  string         `json:"image_url"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	ImgURL    sql.NullString `json:"imgurl,omitempty"`
 }
 type LikeRequest struct {
 	UserID    int    `json:"user_id"`
@@ -42,11 +43,17 @@ type PrivateMessage struct {
 	Read           bool      `json:"read"`
 	SenderUsername string    `json:"senderUsername,omitempty"` // Not a DB column, used for client-side display
 }
-type UserChatInfo struct { 
-    UserID          int       `json:"userId"`
-    Username        string    `json:"username"`
-    IsOnline        bool      `json:"isOnline"`
-    LastMessage     string    `json:"lastMessage"`
-    LastMessageTime time.Time `json:"lastMessageTime"`
-    UnreadCount     int       `json:"unreadCount"`
+type UserChatInfo struct {
+	UserID          int       `json:"userId"`
+	Username        string    `json:"username"`
+	IsOnline        bool      `json:"isOnline"`
+	LastMessage     string    `json:"lastMessage"`
+	LastMessageTime time.Time `json:"lastMessageTime"`
+	UnreadCount     int       `json:"unreadCount"`
+}
+
+type OnlineUser struct {
+	UserID   int       `json:"userId"`
+	Username string    `json:"username"`
+	LastSeen time.Time `json:"lastSeen"`
 }

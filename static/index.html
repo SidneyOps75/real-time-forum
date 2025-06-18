@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Professional Forum</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
     <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -24,7 +24,13 @@
                 <a href="#" class="nav-link primary-btn logged-out" data-page="register">
                     <i class="fas fa-user-plus"></i><span>Register</span>
                 </a>
-                
+
+                <!-- Message Icon for logged-in users -->
+                <button id="message-toggle-btn" class="message-toggle-btn logged-in" style="display: none;" title="Toggle Messages">
+                    <i class="fas fa-comment-dots"></i>
+                    <span id="unread-count-badge" class="unread-badge" style="display: none;">0</span>
+                </button>
+
                 <!-- Logged In User Profile -->
                 <div class="user-profile-container logged-in" style="display: none;">
                     <div class="user-profile-dropdown">
@@ -37,7 +43,7 @@
                                 <i class="fas fa-chevron-down dropdown-arrow"></i>
                             </div>
                         </button>
-                        
+
                         <div class="user-dropdown-menu" id="user-dropdown-menu">
                             <div class="dropdown-header">
                                 <div class="user-avatar-large">
@@ -91,7 +97,7 @@
                 </div>
             </div>
         </aside>
-       
+
         <main id="main-content" class="content-area">
 
             <!-- Home Page -->
@@ -103,7 +109,7 @@
                     </button>
                 </div>
                 <div id="posts-container" class="posts-grid">
-                   
+
                 </div>
             </section>
 
@@ -120,7 +126,7 @@
     <div>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
-    
+
         <span id="password-error" class="error-message"></span>
     </div>
 
@@ -155,7 +161,7 @@
                     </form>
                 </div>
             </section>
-            
+
             <!-- Create Post Page -->
             <section id="create-post-page" class="page-section">
                 <div class="content-header"><h2>Create New Post</h2></div>
@@ -168,7 +174,7 @@
                 </form>
             </section>
         </main>
-        
+
         <!-- Right Sidebar -->
         <aside class="sidebar" id="activity-sidebar">
             <div class="sidebar-section">
@@ -184,40 +190,38 @@
                 </div>
             </div>
         </aside>
-      
-    </div> 
+
+    </div>
 
     <!-- Chat System (Fixed Position Overlay) -->
-    <div id="chat-system-container" class="logged-in" style="display: none;">
+    <div id="chat-system-container" style="display: none;">
             <!-- Left Column: List of users to chat with -->
             <aside id="user-list-panel">
                 <div class="panel-header">
                     <h3>Messages</h3>
                 </div>
                 <ul id="user-list">
-                    
+
                 </ul>
             </aside>
-          
+
             <main id="chat-window">
-                
+
                 <div id="no-chat-selected">
                     <p>Select a user to start chatting</p>
                 </div>
-             
+
                 <div id="active-chat-area" class="visible">
                     <header id="chat-header">
                         <h3 id="chat-with-name"></h3>
                         <button id="close-chat-btn"><i class="fas fa-times"></i></button>
                       </header>
                     <div id="message-list">
-                       
+
                     </div>
-                    <button id="toggle-chat-btn" class="logged-in" style="display: none;">
-                        <i class="fas fa-comment-dots"></i><span>Chat</span>
-                    </button>
+
                     <footer id="chat-footer">
-                       
+
                         <form id="message-form">
                             <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" required>
                             <button type="submit"><i class="fas fa-paper-plane"></i></button>
@@ -225,7 +229,7 @@
                     </footer>
                 </div>
             </main>
-        </div> 
+        </div>
     <script type="module" src="/js/helpers.js"></script>
     <script type="module" src="/js/auth.js"></script>
     <script type="module" src="/js/post.js"></script>
