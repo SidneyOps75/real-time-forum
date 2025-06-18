@@ -1,12 +1,12 @@
 
 :root {
-  /* LinkedIn Color Palette */
+ 
   --primary-color: #0a66c2;
   --primary-dark: #004182;
-  --primary-light: #e0f2fe; /* A lighter blue for backgrounds */
+  --primary-light: #e0f2fe; 
   --text-color: rgba(0, 0, 0, 0.9);
   --text-secondary: rgba(0, 0, 0, 0.6);
-  --background-color: #f4f2ee; /* LinkedIn's signature off-white background */
+  --background-color: #f4f2ee; 
   --card-background: #ffffff;
   --border-color: #e0e0e0;
   --success-color: #00734a;
@@ -384,7 +384,7 @@ a { text-decoration: none; color: inherit; }
   position: fixed;
   bottom: 0;
   right: 24px;
-  width: 750px; /* Wider for a better experience */
+  width: 750px; 
   height: 550px;
   background: var(--card-background);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
@@ -433,10 +433,31 @@ a { text-decoration: none; color: inherit; }
 .user-list-item.active {
   background-color: var(--primary-light);
 }
+.user-list-item.has-new-message {
+    background-color: #e3f2fd;
+    border-left: 3px solid var(--primary-color);
+}
+
 .user-list-item.has-new-message .user-name,
 .user-list-item.has-new-message .last-message-preview {
     font-weight: 600;
     color: var(--text-color);
+}
+
+.user-list-item.has-new-message::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+}
+
+.user-list-item {
+    position: relative;
 }
 
 /* User Avatar & Status */
@@ -456,7 +477,7 @@ a { text-decoration: none; color: inherit; }
   font-weight: 600;
   font-size: 1.2rem;
 }
-.user-avatar-status::after { /* Status dot */
+.user-avatar-status::after { 
   content: '';
   position: absolute;
   bottom: 2px;
@@ -471,12 +492,41 @@ a { text-decoration: none; color: inherit; }
 
 /* User Info in List */
 .user-info {
-  overflow: hidden; /* Prevent text from overflowing */
+  overflow: hidden; 
+  flex: 1;
 }
+
+.user-name-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .user-name {
   font-weight: 600;
   color: var(--text-color);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.unread-count {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .last-message-preview {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -510,7 +560,7 @@ a { text-decoration: none; color: inherit; }
   display: none; /* Hidden by default */
   flex-direction: column;
   height: 100%;
-  background-color: #f7f9fb; /* Slightly different bg for chat area */
+  background-color: #f7f9fb; 
 }
 #active-chat-area.active { display: flex; }
 
@@ -533,7 +583,7 @@ a { text-decoration: none; color: inherit; }
 
 .message-bubble {
   max-width: 75%;
-  min-width: 120px; /* Add minimum width to prevent squeezing */
+  min-width: 120px; 
   padding: 0.6rem 1rem;
   border-radius: 18px;
   word-wrap: break-word;
@@ -547,7 +597,7 @@ a { text-decoration: none; color: inherit; }
   color: #002b4d;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
-  margin-left: auto; /* Push to right with proper spacing */
+  margin-left: auto; 
 }
 
 .message-bubble.received {
@@ -555,7 +605,7 @@ a { text-decoration: none; color: inherit; }
   color: var(--text-color);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
-  margin-right: auto; /* Push to left with proper spacing */
+  margin-right: auto;
 }
 
 .message-header {
@@ -577,9 +627,9 @@ a { text-decoration: none; color: inherit; }
   color: var(--text-secondary);
   text-align: right;
   margin-top: 4px;
-  white-space: nowrap; /* Prevent line breaks */
+  white-space: nowrap; 
   overflow: hidden;
-  text-overflow: ellipsis; /* Add ellipsis if needed */
+  text-overflow: ellipsis; 
 }
 
 /* Loading indicators */
