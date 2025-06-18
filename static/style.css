@@ -49,7 +49,7 @@ a { text-decoration: none; color: inherit; }
 .container, .header-container {
   max-width: 1128px; 
   margin: 0 auto;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .container {
@@ -211,6 +211,7 @@ a { text-decoration: none; color: inherit; }
 /* Page Section Management */
 .page-section {
   display: none !important;
+  width: 680px;
 }
 
 .page-section.active-section {
@@ -218,10 +219,220 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* Ensure auth sections display properly when active */
-.auth-section.active-section {
-  display: flex !important;
+/* ===== Enhanced Auth Pages Styling ===== */
+.auth-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(160vh - 180px);
+  padding: 2rem 1rem;
+  background-color: var(--background-color);
 }
 
+.auth-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  margin: 2rem 0;
+}
+
+.auth-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  padding: 2.5rem; /* Increased padding */
+  text-align: center;
+}
+
+.auth-icon {
+  font-size: 3rem; /* Increased size */
+  margin-bottom: 1.5rem;
+}
+
+.auth-header h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.8rem; /* Slightly larger */
+}
+
+.auth-form {
+  padding: 4.5rem; /* More padding */
+}
+
+.form-row {
+  display: flex;
+  gap: 3.5rem; /* Increased gap */
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 6rem; /* More space between fields */
+  flex: 1;
+}
+
+.half-width {
+  flex: 0 0 calc(50% - 0.75rem); /* Adjusted for larger gap */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.75rem; /* More space below labels */
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 1.05rem; /* Slightly larger */
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 1rem 1.25rem; /* Larger padding */
+  border: 1px solid var(--border-color);
+  border-radius: 8px; /* Slightly more rounded */
+  font-size: 1.05rem; /* Slightly larger text */
+  transition: all 0.3s ease;
+  min-height: 50px; /* Minimum height for inputs */
+}
+
+.form-textarea {
+  min-height: 150px; /* Taller textarea for content */
+  resize: vertical;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light); /* More prominent focus */
+}
+
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem; /* Larger button */
+  border-radius: 8px;
+  font-size: 1.1rem; /* Larger text */
+  font-weight: 600; /* Bolder */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.primary-btn:hover {
+  transform: translateY(-3px); /* More noticeable hover */
+  box-shadow: 0 5px 20px rgba(10, 102, 194, 0.4);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 2rem; /* More space */
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.text-link {
+  color: var(--primary-color);
+  font-weight: 600; /* Bolder */
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+  color: var(--primary-dark);
+}
+
+.error-message {
+  color: var(--error-color);
+  font-size: 0.9rem; /* Slightly larger */
+  margin-top: 0.5rem; /* More space */
+  display: block;
+  min-height: 1.2rem; /* Prevent layout shift */
+}
+
+.general-error-message {
+  color: var(--error-color);
+  background-color: #fee;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Login Page Specific Enhancements */
+#login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#login-form {
+  width: auto;
+  background: var(--card-background);
+  padding: 3rem; /* More padding */
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+}
+
+#login-form .form-group {
+  margin-bottom: 2rem; /* More space between fields */
+}
+
+#login-form .form-actions {
+  margin-top: 3rem; /* More space above button */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .auth-card {
+    max-width: auto;
+    margin: 1rem 0;
+  }
+  
+  .auth-header {
+    padding: 2rem;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .half-width {
+    flex: 1 0 100%;
+  }
+  
+  #login-form {
+    padding: 2rem;
+    max-width: 90%;
+  }
+  
+  .form-input, .form-select {
+    min-height: 48px; /* Slightly smaller on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-section {
+    padding: 1rem;
+    min-height: calc(100vh - 100px);
+  }
+  
+  .auth-card {
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+  }
+  
+  .auth-header {
+    padding: 1.5rem;
+  }
+  
+  .auth-form {
+    padding: 1.5rem;
+  }
+}
 /* ===== Header Styles (LinkedIn-style) ===== */
 .main-header {
   background-color: var(--card-background);
@@ -864,6 +1075,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 .content-area {
+  width: 680px;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -1020,7 +1232,9 @@ a { text-decoration: none; color: inherit; }
 /* Submit Button */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content:center;
+  align-items: center;
+  text-align: center;
   margin-top: 2rem;
 }
 
