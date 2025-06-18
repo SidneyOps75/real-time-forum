@@ -28,6 +28,21 @@ type Hub struct {
 	Unregister chan *Client
 	mu         sync.Mutex
 }
+type WebSocketMessage struct {
+	Type    string          `json:"type"`
+	Payload json.RawMessage `json:"payload"`
+}
+type PrivateMessagePayload struct {
+	RecipientID int    `json:"recipientId"`
+	Content     string `json:"content"`
+}
+type NewMessageNotification struct {
+	SenderID       int    `json:"senderId"`
+	ReceiverID     int    `json:"receiverId"`
+	SenderUsername string `json:"senderUsername"`
+	Content        string `json:"content"`
+	Timestamp      string `json:"timestamp"`
+}
 
 func NewHub() *Hub {
 	return &Hub{
@@ -54,7 +69,19 @@ func (h *Hub) Run() {
 				delete(h.Clients, client.UserID)
 				close(client.Send)
 				db.UpdateUserStatus(client.UserID, false)
-				log.Printf("User %d disconnected from WebSocket.", client.UserID)
+				
+			}
+			h.mu.Unlock()
+
+		case message := <-h.Broadcast:
+			h.mu.Lock()
+			for _, client := range h.Clients {
+				select {
+				case client.Send <- message:
+				default:
+					close(client.Send)
+					delete(h.Clients, client.UserID)
+				}
 			}
 			h.mu.Unlock()
 		}
@@ -62,21 +89,7 @@ func (h *Hub) Run() {
 }
 
 
-type WebSocketMessage struct {
-	Type    string          `json:"type"`
-	Payload json.RawMessage `json:"payload"`
-}
-type PrivateMessagePayload struct {
-	RecipientID int    `json:"recipientId"`
-	Content     string `json:"content"`
-}
-type NewMessageNotification struct {
-	SenderID       int    `json:"senderId"`
-	ReceiverID     int    `json:"receiverId"`
-	SenderUsername string `json:"senderUsername"`
-	Content        string `json:"content"`
-	Timestamp      string `json:"timestamp"`
-}
+
 
 
 func (c *Client) ReadPump() {
@@ -138,17 +151,25 @@ func (c *Client) ReadPump() {
 			if recipientClient, ok := c.Hub.Clients[pmp.RecipientID]; ok {
 				select {
 				case recipientClient.Send <- finalMsgBytes:
+					
 				default:
 					close(recipientClient.Send)
 					delete(c.Hub.Clients, recipientClient.UserID)
+					
 				}
-			}
+			
 			c.Hub.mu.Unlock()
 
 			// 5. Send confirmation back to the sender
-			c.Send <- finalMsgBytes
+			select {
+			case c.Send <- finalMsgBytes:
+				
+			default:
+				
+			}
 		}
 	}
+}
 }
 
 func (c *Client) WritePump() {

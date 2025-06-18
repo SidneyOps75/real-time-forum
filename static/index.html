@@ -113,83 +113,162 @@
                 </div>
             </section>
 
-            <!-- Login Page -->
-            <section id="login-page" class="page-section">
-<form id="login-form">
-    <div>
-        <label for="identifier">Username or Email</label>
-        <input type="text" id="identifier" name="identifier" required>
-        <!-- This span is for username/email errors -->
-        <span id="identifier-error" class="error-message"></span>
+<!-- Login Page -->
+<section id="login-page" class="page-section">
+    <div class="auth-card">
+      <div class="auth-header">
+        <i class="fas fa-sign-in-alt auth-icon"></i>
+        <h2>Welcome Back</h2>
+      </div>
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="identifier">Email or Username</label>
+          <input type="text" id="identifier" name="identifier" class="form-input" required placeholder="Enter your email or username">
+          <span id="identifier-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-input" required placeholder="Enter your password">
+          <span id="password-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <a href="#" class="text-link" style="display: block; text-align: right;">Forgot password?</a>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="primary-btn">
+            <i class="fas fa-sign-in-alt"></i> Login
+          </button>
+        </div>
+        
+        <div class="auth-footer">
+          <p>Don't have an account? <a href="#" class="text-link nav-link" data-page="register">Register here</a></p>
+        </div>
+      </form>
     </div>
-
-    <div>
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-
-        <span id="password-error" class="error-message"></span>
+  </section>
+  
+  <!-- Register Page -->
+  <section id="register-page" class="page-section auth-section">
+    <div class="auth-card">
+      <div class="auth-header">
+        <i class="fas fa-user-plus auth-icon"></i>
+        <h2>Join Our Community</h2>
+      </div>
+      <form id="register-form" class="auth-form" enctype="multipart/form-data">
+        <div class="form-row">
+          <div class="form-group half-width">
+            <label>First Name</label>
+            <input type="text" name="firstname" class="form-input" required placeholder="John">
+          </div>
+          <div class="form-group half-width">
+            <label>Last Name</label>
+            <input type="text" name="lastname" class="form-input" required placeholder="Doe">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-input" required placeholder="johndoe">
+        </div>
+        
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" class="form-input" required placeholder="john@example.com">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group half-width">
+            <label>Password</label>
+            <input type="password" name="password" class="form-input" required placeholder="••••••••">
+          </div>
+          <div class="form-group half-width">
+            <label>Confirm Password</label>
+            <input type="password" name="confirmpassword" class="form-input" required placeholder="••••••••">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group half-width">
+            <label>Age</label>
+            <input type="number" name="age" class="form-input" required placeholder="30" min="13">
+          </div>
+          <div class="form-group half-width">
+            <label>Gender</label>
+            <select name="gender" class="form-select" required>
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="primary-btn">
+            <i class="fas fa-user-plus"></i> Create Account
+          </button>
+        </div>
+        
+        <div class="auth-footer">
+          <p>Already have an account? <a href="#" class="text-link nav-link" data-page="login">Sign in here</a></p>
+        </div>
+      </form>
     </div>
-
-    <button type="submit">Login</button>
-</form>
-</section>
-            <!-- Register Page -->
-            <section id="register-page" class="page-section auth-section">
-                <div class="auth-card">
-                    <div class="auth-header">
-                        <i class="fas fa-user-plus auth-icon"></i>
-                        <h2>Join Our Community</h2>
-                    </div>
-                    <form id="register-form" class="auth-form" enctype="multipart/form-data">
-                        <!-- All your register form inputs are fine, no changes needed inside the form -->
-                        <div class="form-row">
-                            <div class="form-group half-width"><label>First Name</label><input type="text" name="firstname" class="form-input" required placeholder="John" /></div>
-                            <div class="form-group half-width"><label>Last Name</label><input type="text" name="lastname" class="form-input" required placeholder="Doe" /></div>
-                        </div>
-                        <div class="form-group"><label>Username</label><input type="text" name="username" class="form-input" required placeholder="johndoe" /></div>
-                        <div class="form-group"><label>Email</label><input type="email" name="email" class="form-input" required placeholder="john@example.com" /></div>
-                        <div class="form-row">
-                            <div class="form-group half-width"><label>Password</label><input type="password" name="password" class="form-input" required placeholder="••••••••" /></div>
-                            <div class="form-group half-width"><label>Confirm Password</label><input type="password" name="confirmpassword" class="form-input" required placeholder="••••••••" /></div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group half-width"><label>Age</label><input type="number" name="age" class="form-input" required placeholder="30" min="13" /></div>
-                            <div class="form-group half-width"><label>Gender</label><select name="gender" class="form-select" required><option value="">Select Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
-                        </div>
-                        <div class="form-actions"><button type="submit" class="primary-btn full-width">Create Account</button></div>
-                        <div class="auth-footer"><p>Already have an account? <a href="#" class="text-link nav-link" data-page="login">Sign in here</a></p></div>
-                    </form>
-                </div>
-            </section>
-
+  </section>
             <!-- Create Post Page -->
-            <section id="create-post-page" class="page-section">
-                <div class="content-header"><h2>Create New Post</h2></div>
-                <form id="create-post-form" class="post-form" enctype="multipart/form-data">
-                    <div class="form-group"><label for="post-title">Title</label><input type="text" id="post-title" name="title" class="form-input" required /></div>
-                    <div class="form-group"><label for="post-content">Content</label><textarea id="post-content" name="content" rows="8" class="form-textarea" required></textarea></div>
-                    <div class="form-group"><label>Categories</label><div id="categories-container" class="categories-selector"></div></div>
-                    <div class="form-group"><label for="post-image">Image</label><input type="file" id="post-image" name="img" accept="image/*" /></div>
-                    <div class="form-actions"><button type="submit" class="primary-btn full-width">Publish Post</button></div>
-                </form>
-            </section>
-        </main>
 
-        <!-- Right Sidebar -->
-        <aside class="sidebar" id="activity-sidebar">
-            <div class="sidebar-section">
-                <h3>Recent Activity</h3>
-                <div id="recent-activity" class="activity-feed">
-                    <p class="text-secondary">No recent activity</p>
-                </div>
+<section id="create-post-page" class="page-section">
+   
+    <div class="content-area">
+        
+        <header class="create-post-header">
+            <h2>Create a Post</h2>
+            
+            <button class="secondary-btn nav-link" data-page="home">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </header>
+
+        <form id="create-post-form" enctype="multipart/form-data">
+
+            <div class="form-group">
+                <label for="post-title" class="form-label">Title</label>
+                <input type="text" id="post-title" name="title" class="form-input" required placeholder="e.g., How to Improve Project Management Skills">
             </div>
-            <div class="sidebar-section logged-in" style="display: none;">
-                <h3>Online Users</h3>
-                <div id="online-users" class="user-list-mini">
-                    <!-- Online users will be loaded here -->
-                </div>
+
+            <div class="form-group">
+                <label for="post-content" class="form-label">Content</label>
+                <textarea id="post-content" name="content" rows="8" class="form-textarea" required placeholder="What do you want to talk about? Use this space to share your thoughts, questions, or ideas."></textarea>
             </div>
-        </aside>
+
+            <div class="form-group">
+                <label class="form-label">Categories (Select at least one)</label>
+                
+                <div id="categories-container" class="categories-selector"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Image (Optional)</label>
+
+                <label for="post-image" class="file-upload-label">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Click to upload or drag & drop an image</span>
+                </label>
+                <input type="file" id="post-image" name="img" accept="image/*" class="file-upload-input" />
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="primary-btn">
+                    <i class="fas fa-paper-plane"></i> Publish Post
+                </button>
+            </div>
+
+        </form>
+    </div>
+</section>
 
     </div>
 

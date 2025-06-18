@@ -80,6 +80,12 @@ export function initializeChat(userId) {
         return;
     }
     currentUserId = userId;
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
     connectWebSocket(wsUrl);
@@ -131,9 +137,12 @@ function connectWebSocket(url) {
 }
 
 function handleNewMessage(payload) {
+    console.log("Received new message:", payload);
     const isFromCurrentChatPartner = payload.senderId === currentChattingWith.id;
+    const isFromSelf = payload.senderId === currentUserId;
 
-    if (isFromCurrentChatPartner) {
+    if (isFromCurrentChatPartner && !isFromSelf) {
+        // Message from the person we're currently chatting with
         appendMessage(payload.senderUsername, payload.content, payload.timestamp, false);
         scrollToBottom(messageList);
 
@@ -141,19 +150,56 @@ function handleNewMessage(payload) {
         if (!isChatVisible) {
             incrementUnreadCount();
         }
-    } else {
+    } else if (!isFromSelf) {
+        // Message from someone else - show notification
         const userItem = userList?.querySelector(`.user-list-item[data-user-id='${payload.senderId}']`);
         if (userItem) {
             userItem.classList.add('has-new-message');
             const lastMsgPreview = userItem.querySelector('.last-message-preview');
             if (lastMsgPreview) lastMsgPreview.textContent = payload.content;
+            
+            // Update or add unread count badge
+            let unreadBadge = userItem.querySelector('.unread-count');
+            if (unreadBadge) {
+                const currentCount = parseInt(unreadBadge.textContent) || 0;
+                unreadBadge.textContent = currentCount + 1;
+            } else {
+                // Add unread count badge if it doesn't exist
+                const userNameContainer = userItem.querySelector('.user-name-container');
+                if (userNameContainer) {
+                    const badge = document.createElement('span');
+                    badge.className = 'unread-count';
+                    badge.textContent = '1';
+                    userNameContainer.appendChild(badge);
+                } else {
+                    // Fallback: create the container structure if it doesn't exist
+                    const userInfo = userItem.querySelector('.user-info');
+                    const userName = userInfo.querySelector('.user-name');
+                    if (userName && userInfo) {
+                        const container = document.createElement('div');
+                        container.className = 'user-name-container';
+                        const badge = document.createElement('span');
+                        badge.className = 'unread-count';
+                        badge.textContent = '1';
+                        
+                        userName.parentNode.insertBefore(container, userName);
+                        container.appendChild(userName);
+                        container.appendChild(badge);
+                    }
+                }
+            }
         }
-
-        // Always increment unread count for messages from other users
-        if (!isChatVisible) {
-            incrementUnreadCount();
+        
+        // Show browser notification if supported
+        if (Notification.permission === 'granted') {
+            new Notification(`New message from ${payload.senderUsername}`, {
+                body: payload.content,
+                icon: '/static/images/chat-icon.png'
+            });
         }
     }
+    
+    // Always refresh the user list to update timestamps and unread counts
     fetchAndRenderUsers();
 }
 
@@ -175,8 +221,10 @@ async function fetchAndRenderUsers() {
         const users = await response.json();
 
         users.sort((a, b) => {
-            const timeA = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : 0;
-            const timeB = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : 0;
+            const timeA = a.lastMessageTimestamp || a.lastMessageTime ? 
+                new Date(a.lastMessageTimestamp || a.lastMessageTime).getTime() : 0;
+            const timeB = b.lastMessageTimestamp || b.lastMessageTime ? 
+                new Date(b.lastMessageTimestamp || b.lastMessageTime).getTime() : 0;
             if (timeA !== timeB) return timeB - timeA;
             return a.username.localeCompare(b.username);
         });
@@ -202,15 +250,24 @@ function renderUserList(users) {
 
         const statusClass = user.isOnline ? 'online' : 'offline';
         const statusText = user.isOnline ? '🟢 Online' : '⚫ Offline';
-        const lastMessageText = user.lastMessageContent || 'No messages yet';
+        const lastMessageText = user.lastMessageContent || user.lastMessage || 'No messages yet';
+        const unreadCount = user.unreadCount || 0;
+
+        // Add unread message indicator if there are unread messages
+        if (unreadCount > 0) {
+            li.classList.add('has-new-message');
+        }
 
         li.innerHTML = `
             <div class="user-avatar-status ${statusClass}">
                 <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
             </div>
             <div class="user-info">
-                <span class="user-name">${user.username}</span>
+                <div class="user-name-container">
+                    <span class="user-name">${user.username}</span>
                 <span class="user-status-indicator">${statusText}</span>
+                    ${unreadCount > 0 ? `<span class="unread-count">${unreadCount}</span>` : ''}
+                </div>
                 <p class="last-message-preview">${escapeHtml(lastMessageText)}</p>
             </div>
         `;
@@ -234,6 +291,11 @@ export async function openChatWithUser(userId, username) {
         item.classList.toggle('active', parseInt(item.dataset.userId) === userId);
         if (parseInt(item.dataset.userId) === userId) {
             item.classList.remove('has-new-message');
+            // Remove unread count badge when opening chat
+            const unreadBadge = item.querySelector('.unread-count');
+            if (unreadBadge) {
+                unreadBadge.remove();
+            }
         }
     });
 

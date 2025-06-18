@@ -10,6 +10,18 @@ export function formatDate(dateString) {
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
 
     return date.toLocaleDateString();
+    
+    // Always show both date and time
+    const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    };
+    
+    return date.toLocaleDateString([], options);
 }
 
 export function escapeHtml(text) {
