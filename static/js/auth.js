@@ -111,7 +111,7 @@ export async function handleRegister() {
     const originalText = submitBtn?.textContent || 'Create Account';
     
     try {
-        // Update button state
+       
         if (submitBtn) {
             submitBtn.textContent = 'Creating Account...';
             submitBtn.disabled = true;
