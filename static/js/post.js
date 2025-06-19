@@ -124,7 +124,6 @@ export function displayPosts(posts) {
                 <i class="fas fa-comments" style="font-size: 3rem; color: #ccc;"></i>
                 <h3 style="margin-top: 1rem;">No posts yet</h3>
                 <p>Be the first to start a discussion!</p>
-                <button onclick="window.showPage('create-post')" class="primary-btn" style="margin-top: 1rem;">Create Post</button>
             </div>
         `;
         return;
