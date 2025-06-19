@@ -71,6 +71,46 @@ if (messageList) {
     if (closeChatBtn) {
         closeChatBtn.addEventListener('click', hideChatInterface);
     }
+
+    // Online users toggle functionality
+    const toggleOnlineUsersBtn = document.getElementById('toggle-online-users');
+    if (toggleOnlineUsersBtn) {
+        toggleOnlineUsersBtn.addEventListener('click', toggleOnlineUsersList);
+    }
+}
+
+// Toggle online users list visibility
+function toggleOnlineUsersList() {
+    const toggleBtn = document.getElementById('toggle-online-users');
+    const onlineUsersList = document.getElementById('online-users');
+    
+    if (!toggleBtn || !onlineUsersList) return;
+
+    const isCollapsed = onlineUsersList.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        // Expand
+        onlineUsersList.classList.remove('collapsed');
+        toggleBtn.classList.remove('collapsed');
+        localStorage.setItem('onlineUsersCollapsed', 'false');
+    } else {
+        // Collapse
+        onlineUsersList.classList.add('collapsed');
+        toggleBtn.classList.add('collapsed');
+        localStorage.setItem('onlineUsersCollapsed', 'true');
+    }
+}
+
+// Initialize online users list state from localStorage
+function initializeOnlineUsersState() {
+    const isCollapsed = localStorage.getItem('onlineUsersCollapsed') === 'true';
+    const toggleBtn = document.getElementById('toggle-online-users');
+    const onlineUsersList = document.getElementById('online-users');
+    
+    if (isCollapsed && toggleBtn && onlineUsersList) {
+        onlineUsersList.classList.add('collapsed');
+        toggleBtn.classList.add('collapsed');
+    }
 }
 
 export function initializeChat(userId) {
@@ -91,6 +131,9 @@ export function initializeChat(userId) {
     connectWebSocket(wsUrl);
     fetchAndRenderUsers();
     fetchAndRenderOnlineUsers();
+
+    // Initialize online users state
+    initializeOnlineUsersState();
 
     // Set up periodic refresh for online users (every 30 seconds)
     setInterval(() => {
@@ -545,8 +588,19 @@ export async function fetchAndRenderOnlineUsers() {
 }
 
 function renderOnlineUsersList(users, container) {
+    // Update online count
+    const onlineCountElement = document.getElementById('online-count');
+    if (onlineCountElement) {
+        onlineCountElement.textContent = users ? users.length : 0;
+    }
+
     if (!users || users.length === 0) {
-        container.innerHTML = '<p class="no-users-message">No users online</p>';
+        container.innerHTML = `
+            <div class="no-users-message">
+                <i class="fas fa-user-slash"></i>
+                <p>No users online right now</p>
+            </div>
+        `;
         return;
     }
 
@@ -559,9 +613,9 @@ function renderOnlineUsersList(users, container) {
                 </div>
                 <div class="user-info">
                     <span class="user-name">${escapeHtml(user.username)}</span>
-                    <span class="user-status online-status">🟢 Online ${timeAgo}</span>
+                    <span class="user-status">Active ${timeAgo}</span>
                 </div>
-                <button class="chat-btn" title="Start chat">
+                <button class="chat-btn" title="Start chat with ${escapeHtml(user.username)}">
                     <i class="fas fa-comment"></i>
                 </button>
             </div>
@@ -579,13 +633,13 @@ function renderOnlineUsersList(users, container) {
         chatBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             openChatWithUser(userId, username);
-            showChatInterface(); // Use the proper function
+            showChatInterface();
         });
 
         // Also allow clicking the whole item to start chat
         item.addEventListener('click', () => {
             openChatWithUser(userId, username);
-            showChatInterface(); // Use the proper function
+            showChatInterface();
         });
     });
 }
