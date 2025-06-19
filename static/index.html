@@ -9,7 +9,23 @@
     <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-
+    <aside class="online-users-widget" id="activity-sidebar">
+        <div class="sidebar-section online-users-section logged-in" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-circle online-indicator"></i>
+                    <h3>Online Now</h3>
+                    <span id="online-count" class="online-count">0</span>
+                </div>
+                <button id="toggle-online-users" class="toggle-btn" title="Toggle online users">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div id="online-users" class="online-users-list">
+                <!-- Online users will be loaded here -->
+            </div>
+        </div>
+    </aside>
     <header class="main-header">
         <div class="header-container">
             <div class="logo-container">
@@ -99,23 +115,7 @@
         </aside>
 
         <!-- Online Users Widget - Top Right Corner -->
-        <aside class="online-users-widget" id="activity-sidebar">
-            <div class="sidebar-section online-users-section logged-in" style="display: none;">
-                <div class="section-header">
-                    <div class="section-title">
-                        <i class="fas fa-circle online-indicator"></i>
-                        <h3>Online Now</h3>
-                        <span id="online-count" class="online-count">0</span>
-                    </div>
-                    <button id="toggle-online-users" class="toggle-btn" title="Toggle online users">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                </div>
-                <div id="online-users" class="online-users-list">
-                    <!-- Online users will be loaded here -->
-                </div>
-            </div>
-        </aside>
+        
 
         <main id="main-content" class="content-area">
 
@@ -143,13 +143,13 @@
         <div class="form-group">
           <label for="identifier">Email or nickname</label>
           <input type="text" id="identifier" name="identifier" class="form-input" required placeholder="Enter your email or nickname">
-          <span id="identifier-error" class="error-message"></span>
+          
         </div>
         
         <div class="form-group">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" class="form-input" required placeholder="Enter your password">
-          <span id="password-error" class="error-message"></span>
+          
         </div>
          
         <div class="form-actions">
