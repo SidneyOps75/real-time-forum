@@ -69,7 +69,7 @@ func HandleGetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(users) == 0 {
-		log.Printf("No users found for chat for user ID: %d", currentUserID)
+		
 	}
 
 	w.Header().Set("Content-Type", "application/json")
