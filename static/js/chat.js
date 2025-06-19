@@ -1,4 +1,4 @@
-import { throttle } from './helpers.js';
+import {  throttleScroll } from './helpers.js';
 import { formatDate, escapeHtml } from './helpers.js';
 
 let ws;
@@ -9,6 +9,9 @@ let isLoadingMessages = false;
 let lastScrollTop = 0; // Track last scroll position to prevent duplicate calls
 let isChatVisible = false; // Track chat visibility state
 let unreadMessageCount = 0; // Track unread messages
+let scrollThreshold = 5; // Pixels from top to trigger load more
+let messageLoadBatchSize = 10; // Number of messages to load per batch
+let lastLoadTime = 0; // Track last load time to prevent rapid successive loads
 
 // DOM elements
 let userList, messageList, messageForm, messageInput, chatWithName, noChatSelected, activeChatArea;
@@ -47,7 +50,8 @@ export function setupChatEventListeners() {
 
 
 if (messageList) {
-    messageList.addEventListener('scroll', throttle(handleMessageListScroll, 200));
+    // Use enhanced throttle for scroll events with better performance
+    messageList.addEventListener('scroll', throttleScroll(handleMessageListScroll, 150));
 }
 
     if (userList) {
@@ -83,11 +87,11 @@ if (messageList) {
 function toggleOnlineUsersList() {
     const toggleBtn = document.getElementById('toggle-online-users');
     const onlineUsersList = document.getElementById('online-users');
-    
+
     if (!toggleBtn || !onlineUsersList) return;
 
     const isCollapsed = onlineUsersList.classList.contains('collapsed');
-    
+
     if (isCollapsed) {
         // Expand
         onlineUsersList.classList.remove('collapsed');
@@ -106,7 +110,7 @@ function initializeOnlineUsersState() {
     const isCollapsed = localStorage.getItem('onlineUsersCollapsed') === 'true';
     const toggleBtn = document.getElementById('toggle-online-users');
     const onlineUsersList = document.getElementById('online-users');
-    
+
     if (isCollapsed && toggleBtn && onlineUsersList) {
         onlineUsersList.classList.add('collapsed');
         toggleBtn.classList.add('collapsed');
@@ -120,12 +124,12 @@ export function initializeChat(userId) {
         return;
     }
     currentUserId = userId;
-    
+
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
     }
-    
+
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
     connectWebSocket(wsUrl);
@@ -200,7 +204,7 @@ function handleNewMessage(payload) {
             userItem.classList.add('has-new-message');
             const lastMsgPreview = userItem.querySelector('.last-message-preview');
             if (lastMsgPreview) lastMsgPreview.textContent = payload.content;
-            
+
             // Update or add unread count badge
             let unreadBadge = userItem.querySelector('.unread-count');
             if (unreadBadge) {
@@ -224,7 +228,7 @@ function handleNewMessage(payload) {
                         const badge = document.createElement('span');
                         badge.className = 'unread-count';
                         badge.textContent = '1';
-                        
+
                         userName.parentNode.insertBefore(container, userName);
                         container.appendChild(userName);
                         container.appendChild(badge);
@@ -232,7 +236,7 @@ function handleNewMessage(payload) {
                 }
             }
         }
-        
+
         // Show browser notification if supported
         if (Notification.permission === 'granted') {
             new Notification(`New message from ${payload.senderUsername}`, {
@@ -241,7 +245,7 @@ function handleNewMessage(payload) {
             });
         }
     }
-    
+
     // Always refresh the user list to update timestamps and unread counts
     fetchAndRenderUsers();
 }
@@ -264,9 +268,9 @@ async function fetchAndRenderUsers() {
         const users = await response.json();
 
         users.sort((a, b) => {
-            const timeA = a.lastMessageTimestamp || a.lastMessageTime ? 
+            const timeA = a.lastMessageTimestamp || a.lastMessageTime ?
                 new Date(a.lastMessageTimestamp || a.lastMessageTime).getTime() : 0;
-            const timeB = b.lastMessageTimestamp || b.lastMessageTime ? 
+            const timeB = b.lastMessageTimestamp || b.lastMessageTime ?
                 new Date(b.lastMessageTimestamp || b.lastMessageTime).getTime() : 0;
             if (timeA !== timeB) return timeB - timeA;
             return a.username.localeCompare(b.username);
@@ -321,6 +325,9 @@ function renderUserList(users) {
 export async function openChatWithUser(userId, username) {
     if (currentChattingWith.id === userId) return;
 
+    // Reset chat state for new conversation
+    resetChatState();
+
     currentChattingWith = { id: userId, username: username };
     messageOffsets.set(userId, 0);
     isLoadingMessages = false;
@@ -345,11 +352,25 @@ export async function openChatWithUser(userId, username) {
     await fetchAndRenderMessages(userId, true);
 }
 
+// Reset chat state when switching conversations
+function resetChatState() {
+    lastScrollTop = 0;
+    lastLoadTime = 0;
+    isLoadingMessages = false;
+
+    // Remove any existing loading indicators
+    hideLoadingIndicator();
+    document.querySelector('.conversation-beginning-indicator')?.remove();
+    document.querySelector('.message-error-indicator')?.remove();
+}
+
 async function fetchAndRenderMessages(userId, isInitialLoad = false) {
     const offset = messageOffsets.get(userId) || 0;
 
     try {
-        const response = await fetch(`/api/messages?with=${userId}&offset=${offset}&limit=10`, { credentials: 'include' });
+        const response = await fetch(`/api/messages?with=${userId}&offset=${offset}&limit=${messageLoadBatchSize}`, {
+            credentials: 'include'
+        });
         if (!response.ok) throw new Error(`Failed to fetch messages (Status: ${response.status})`);
         const messages = await response.json();
 
@@ -371,11 +392,18 @@ async function fetchAndRenderMessages(userId, isInitialLoad = false) {
 
 function handleMessageListScroll() {
     const currentScrollTop = messageList.scrollTop;
+    const currentTime = Date.now();
 
-    // Only trigger if we're at the very top (within 5px tolerance) and not already loading
-    // Also check if scroll position has changed to prevent duplicate calls
-    if (currentScrollTop <= 5 && !isLoadingMessages && currentScrollTop !== lastScrollTop) {
+    // Enhanced scroll handling with better throttling
+    // Only trigger if we're at the very top (within threshold) and not already loading
+    // Also check if scroll position has changed and enough time has passed since last load
+    if (currentScrollTop <= scrollThreshold &&
+        !isLoadingMessages &&
+        currentScrollTop !== lastScrollTop &&
+        (currentTime - lastLoadTime) > 500) { // Minimum 500ms between loads
+
         lastScrollTop = currentScrollTop;
+        lastLoadTime = currentTime;
         loadMoreMessages();
     } else {
         lastScrollTop = currentScrollTop;
@@ -399,14 +427,16 @@ async function loadMoreMessages() {
     const scrollHeightBefore = messageList.scrollHeight;
 
     try {
-        // Ensure we request exactly 10 messages
-        const response = await fetch(`/api/messages?with=${userId}&offset=${offset}&limit=10`, { credentials: 'include' });
+        // Ensure we request exactly the configured batch size (default 10 messages)
+        const response = await fetch(`/api/messages?with=${userId}&offset=${offset}&limit=${messageLoadBatchSize}`, {
+            credentials: 'include'
+        });
         if (!response.ok) throw new Error(`Failed to load more messages (Status: ${response.status})`);
 
         const messages = await response.json();
 
         if (messages && messages.length > 0) {
-            console.log(`Loading ${messages.length} more messages (batch of 10)`);
+            console.log(`Loading ${messages.length} more messages (batch of ${messageLoadBatchSize})`);
 
             // Reverse messages to show oldest first when prepending
             messages.reverse().forEach(msg => {
@@ -420,8 +450,8 @@ async function loadMoreMessages() {
             const scrollHeightAfter = messageList.scrollHeight;
             messageList.scrollTop = scrollHeightAfter - scrollHeightBefore;
 
-            // If we got less than 10 messages, we've reached the beginning
-            if (messages.length < 10) {
+            // If we got less than the batch size, we've reached the beginning
+            if (messages.length < messageLoadBatchSize) {
                 console.log("Reached the beginning of conversation");
                 showBeginningIndicator();
             }
@@ -435,6 +465,8 @@ async function loadMoreMessages() {
     } finally {
         hideLoadingIndicator();
         isLoadingMessages = false;
+        // Reset last load time after successful/failed load
+        lastLoadTime = Date.now();
     }
 }
 
@@ -457,7 +489,7 @@ function showLoadingIndicator() {
     if (document.querySelector('.message-loading-indicator')) return;
     const loader = document.createElement('div');
     loader.className = 'message-loading-indicator';
-    loader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading 10 more messages...';
+    loader.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Loading ${messageLoadBatchSize} more messages...`;
     messageList.prepend(loader);
 }
 
@@ -652,4 +684,35 @@ function getTimeAgo(date) {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
+}
+
+// Configuration functions for throttling behavior
+export function setChatConfig(config) {
+    if (config.scrollThreshold !== undefined) scrollThreshold = config.scrollThreshold;
+    if (config.messageLoadBatchSize !== undefined) messageLoadBatchSize = config.messageLoadBatchSize;
+    console.log(`Chat config updated: scrollThreshold=${scrollThreshold}, batchSize=${messageLoadBatchSize}`);
+}
+
+export function getChatConfig() {
+    return {
+        scrollThreshold,
+        messageLoadBatchSize,
+        isLoadingMessages,
+        lastLoadTime
+    };
+}
+
+// Debug function to check throttling status
+export function getChatDebugInfo() {
+    return {
+        currentChattingWith,
+        messageOffsets: Object.fromEntries(messageOffsets),
+        isLoadingMessages,
+        lastScrollTop,
+        lastLoadTime,
+        timeSinceLastLoad: Date.now() - lastLoadTime,
+        isChatVisible,
+        scrollThreshold,
+        messageLoadBatchSize
+    };
 }
