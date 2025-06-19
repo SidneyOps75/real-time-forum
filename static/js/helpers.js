@@ -2,7 +2,7 @@
 export function formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
-    
+
     // Always show both date and time
     const options = {
         year: 'numeric',
@@ -12,7 +12,7 @@ export function formatDate(dateString) {
         minute: '2-digit',
         hour12: true
     };
-    
+
     return date.toLocaleDateString([], options);
 }
 
@@ -23,29 +23,31 @@ export function escapeHtml(text) {
     return div.innerHTML;
 }
 
-export function throttle(func, limit) {
-    let inThrottle;
-    let lastFunc;
-    let lastRan;
+// Enhanced throttle function with better performance for scroll events
+export function throttleScroll(func, limit = 200) {
+    let timeoutId;
+    let lastExecTime = 0;
 
-    return function() {
-        const context = this;
-        const args = arguments;
+    return function(...args) {
+        const currentTime = Date.now();
 
-        if (!lastRan) {
-            func.apply(context, args);
-            lastRan = Date.now();
+        // If enough time has passed since last execution, execute immediately
+        if (currentTime - lastExecTime >= limit) {
+            func.apply(this, args);
+            lastExecTime = currentTime;
         } else {
-            clearTimeout(lastFunc);
-            lastFunc = setTimeout(function() {
-                if ((Date.now() - lastRan) >= limit) {
-                    func.apply(context, args);
-                    lastRan = Date.now();
-                }
-            }, limit - (Date.now() - lastRan));
+            // Clear any pending timeout and set a new one
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func.apply(this, args);
+                lastExecTime = Date.now();
+            }, limit - (currentTime - lastExecTime));
         }
     };
 }
+
+// Debounce function for additional control
+
 
 export function scrollToBottom(element) {
     if (element) element.scrollTop = element.scrollHeight;
